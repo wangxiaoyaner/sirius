@@ -15,7 +15,11 @@ string global_err_message[]={"",//0
 	"\"]\" expected",//13
 	"small int expected",//14
 	"\"of\" expected",//15
-	"type ecpected"//16
+	"type expected",//16
+	"identifier expected",//17
+	"\":\" expected",//18
+	"\"(\" expected",//19
+	"\")\" expected"//20
 
 };
 

@@ -4,19 +4,39 @@ int main()
 	sourcefile=fopen("test","r");
 	freopen("1","w",stdout);
 	lex_getch();
-	while(lex_getsym())
+	lex_getsym();
+	int level=0;
+	while(1)
 	{
-
-		if(lex_sym=="ident")
-			cout << global_lex_line_num <<": " << lex_token <<'\t'<<"ident\n";
-		else if(lex_sym=="digit")
-			cout << global_lex_line_num << ": " << lex_value <<'\t'<<"digit\n";
-		else if(lex_sym=="char")
-			cout << global_lex_line_num << ": " << lex_token <<"\tchar\n";
-		else if(lex_sym=="string")
-			cout << global_lex_line_num << ": " << lex_token << "\tstring\n";
+		if(lex_sym=="const")
+		{
+			lex_getsym();
+			parser_constdeclaration(level);		
+		}
+		else if(lex_sym=="var")
+		{
+			lex_getsym();
+			parser_vardeclaration(level);
+		}
+		else if(lex_sym=="")
+			break;
+		else if(lex_sym=="procedure")
+		{
+			lex_getsym();
+			parser_procedureheader(level);
+		}
+		else if(lex_sym=="function")
+		{
+			lex_getsym();
+			parser_functionheader(level);
+		}
 		else
-			cout << global_lex_line_num << ": " << lex_sym << "\n";
+		{
+			cout << "wrong";
+			lex_getsym();
+		}
+			
 	}
+	symbtable_display();
 	return 0;
 }

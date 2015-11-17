@@ -41,12 +41,15 @@ int lex_getsym();
 extern int symbtable_adr;
 extern symbtable symbtable_table[];
 extern int symbtable_i;
-int symbtable_enter(string name,string kind,string type,int value,int level,int size,int adr,int para_ifvar);
+int symbtable_enter(string name,string kind,string type,int value,int level,int size,int para_ifvar);
 void symbtable_display();//const,var,array,function,procedure,parameter
 void symbtable_delete(int level);
 
-
+int parser_functionheader(int &level);
 int parser_constdefinition(int level);
 int parser_constdeclaration(int level);
 int parser_vardefinition(int level);
 int parser_vardeclaration(int level);
+int parser_procedureheader(int &level);
+int parser_formalparalist(int level,int &para_size);
+int parser_formalparasection(int level,int &para_size);

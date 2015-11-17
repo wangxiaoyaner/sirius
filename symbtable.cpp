@@ -5,7 +5,7 @@ symbtable symbtable_table[SYMBTABLE_MAX_NUM];
 
 int symbtable_i=0;
 
-int symbtable_find_dup(string name,int level)
+int symbtable_find_dup(string name,int level)//在同层中查看是否重名
 {
 	for(int i=symbtable_i-1;i>=0;i--)
 	{
@@ -17,7 +17,7 @@ int symbtable_find_dup(string name,int level)
 	return -1;
 }
 
-int symbtable_enter(string name,string kind,string type,int value,int level,int size,int adr,int para_ifvar)
+int symbtable_enter(string name,string kind,string type,int value,int level,int size,int para_ifvar)
 {
 	if(symbtable_find_dup(name,level)>-1)
 	{
@@ -30,7 +30,8 @@ int symbtable_enter(string name,string kind,string type,int value,int level,int 
 	symbtable_table[symbtable_i].value=value;
 	symbtable_table[symbtable_i].level=level;
 	symbtable_table[symbtable_i].size=size;
-	if(kind=="var")
+	symbtable_table[symbtable_i].adr=-1;
+	/*if(kind=="var")
 		symbtable_table[symbtable_i].adr=symbtable_adr++;
 	else if(kind=="array")
 	{
@@ -42,16 +43,16 @@ int symbtable_enter(string name,string kind,string type,int value,int level,int 
 		symbtable_table[symbtable_i].adr=symbtable_adr++;
 		symbtable_adr+=size;
 	}
-	else if(kind=="parameter")
+	else */if(kind=="parameter")
 	{
-		symbtable_table[symbtable_i].adr=adr;
+//		symbtable_table[symbtable_i].adr=adr;
 		symbtable_table[symbtable_i].para_ifvar=para_ifvar;
 	}
 	symbtable_i++;
 	return 1;
 }
 
-void symbtable_delete(int level)
+void symbtable_delete(int level)//删除某一层的符号表
 {
 	int i;
 	for(i=symbtable_i;i>=0;i--)
