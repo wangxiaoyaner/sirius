@@ -1,103 +1,104 @@
 #include"global.h"
-int symbtable_adr=0;
-
-symbtable symbtable_table[SYMBTABLE_MAX_NUM];
-
-int symbtable_i=0;
-
-int symbtable_find_dup(string name,int level)//在同层中查看是否重名
+symbTable *symbtable_table=NULL;
+symbTable *symbtable_now=NULL;
+static symbTable *alltable[100][100];
+static int alltable_j[100]={0};
+int symbtable_level=-1;
+//require:symbtable_now is not null;
+int symbtable_find_dup(string name)
 {
-	for(int i=symbtable_i-1;i>=0;i--)
+	symbItem *tmp=symbtable_now->first_item;
+	while(tmp!=NULL)
 	{
-		if(symbtable_table[i].level!=level)
-			return -1;
-		if(symbtable_table[i].name==name)
-			return i;
+		if(tmp->name==name)
+			return 1;
 	}
-	return -1;
+	return 0;
+}
+void symbtable_up_level()
+{
+	if(symbtable_now!=NULL)//assert
+		symbtable_now=symbtable_now->father;
+	symbtable_level--;
+}
+void symbtable_new_level(string name)
+{
+	symbTable *childTable;
+	childTable=(symbTable*)malloc(sizeof(symbTable));
+	childTable->name=name;
+	childTable->level=++symbtable_level;
+	childTable->first_item=NULL;
+	childTable->last_item=NULL;
+	childTable->firstchild=NULL;
+	childTable->lastchild=NULL;
+	childTable->brother=NULL;
+	if(symbtable_table=NULL)
+	{
+		childTable->father=NULL;
+		symbtable_table=childTable;	
+	}
+	else
+		childTable->father=symbtable_now;
+	if(symbtable_now->firstchild==NULL)
+	{
+		symbtable_now->firstchild=childTable;
+		symbtable_now->lastchild=childTable;
+	}
+	else
+	{
+		symbtable_now->lastchild->brother=childTable;
+		symbtable_now->lastchild=symbtable_now->lastchild->brother;
+	}
+	symbtable_now=childTable;
+	alltable[symbtable_level][alltable_j[symbtable_level]++]=childTable;
 }
 
-int symbtable_enter(string name,string kind,string type,int value,int level,int size,int para_ifvar)
+//大部分东西都是需要回填的。
+//int symbtable_find_dup(string name)
+
+int symbtable_enter(string name,string kind,string type,int value,int para_ifvar)
 {
-	if(symbtable_find_dup(name,level)>-1)
+	if(!symbtable_find_dup(name))
 	{
-		global_error(5,name);
+		global_error(5,"");
 		return 0;
 	}
-	symbtable_table[symbtable_i].name=name;
-	symbtable_table[symbtable_i].kind=kind;
-	symbtable_table[symbtable_i].type=type;
-	symbtable_table[symbtable_i].value=value;
-	symbtable_table[symbtable_i].level=level;
-	symbtable_table[symbtable_i].size=size;
-	symbtable_table[symbtable_i].adr=-1;
-	/*if(kind=="var")
-		symbtable_table[symbtable_i].adr=symbtable_adr++;
-	else if(kind=="array")
+	symbItem *new_item=(symbItem*)malloc(sizeof(symbItem));
+	new_item->name=name;
+	new_item->kind=kind;
+	new_item->type=type;
+	new_item->value=value;
+	new_item->para_ifvar=para_ifvar;
+	new_item->link=NULL;
+	if(symbtable_now->first_item==NULL)
 	{
-		symbtable_table[symbtable_i].adr=symbtable_adr;
-		symbtable_adr+=size;
+		symbtable_now->first_item=new_item;
+		symbtable_now->last_item=new_item;
 	}
-	else if(kind=="function"||kind=="procedure")
+	else
 	{
-		symbtable_table[symbtable_i].adr=symbtable_adr++;
-		symbtable_adr+=size;
+		symbtable_now->last_item->link=new_item;
+		symbtable_now->last_item=symbtable_now->last_item->link;
 	}
-	else */if(kind=="parameter")
-	{
-//		symbtable_table[symbtable_i].adr=adr;
-		symbtable_table[symbtable_i].para_ifvar=para_ifvar;
-	}
-	symbtable_i++;
-	return 1;
+	return 0;
 }
-
-void symbtable_delete(int level)//删除某一层的符号表
+static void symbtable_print_single(symbTable *itable)
 {
-	int i;
-	for(i=symbtable_i;i>=0;i--)
+	symbItem *tmp=itable->first_item;
+	while(tmp!=NULL)
 	{
-		if(symbtable_table[i].level!=level||symbtable_table[i].kind=="parameter")
-			break;
+		cout << "name:" << tmp->name << "\tlevel:" << tmp->level 
+			<< "\tkind"<< tmp->kind << "\ttype:"<< tmp->type 
+			<<"\tsize"<< tmp->size << "\tpara_ifvar"<<tmp->para_ifvar<< endl;
+		tmp=tmp->link;
 	}
-	symbtable_i=i+1;
-	for(;symbtable_table[i].level==level&&i>=0;i--)
-	{
-		symbtable_table[i].level--;//参数的层次改变
-		symbtable_table[i].name="";//名字没有了
-	}
+
 }
-
-void symbtable_display()//const,var,array,function,procedure,parameter
+void symbtable_display()
 {
-	int i;
-	symbtable *tmp;
-	cout<<"level\t"<<"name\t"<<"kind\t"<<"type\t"<<"value\t"<<"adr\t"<<"size\t"<<"para_ifvar\t"<<endl;
-	for(i=0;i<symbtable_i;i++)
+	for(int i=0;i<90;i++)
 	{
-		tmp=&symbtable_table[i];
-		cout<<tmp->level<<'\t'<<tmp->name<<'\t'<<tmp->kind<<'\t';
-		if(tmp->kind=="procedure")
-			cout<<"";
-		else
-			cout<<tmp->type;
-		cout<<"\t";
-		if(tmp->kind=="const")
-		{
-			if(tmp->type=="char")
-				cout << (char)tmp->value;
-			else
-				cout << tmp->value;
-			cout <<'\t'<<"";
-		}
-		else
-			cout << "\t"<<tmp->adr;
-		cout <<'\t';
-		if(tmp->kind=="array"||tmp->kind=="procedure"||tmp->kind=="function")
-			cout << tmp->size;
-		cout <<"\t";
-		if(tmp->kind=="parameter")
-			cout <<tmp->para_ifvar;
-		cout << "\t"<<endl;
+		for(int j=0;j<alltable_j[i];j++)
+			symbtable_print_single(alltable[i][j]);
 	}
 }

@@ -30,7 +30,7 @@ int parser_constdefinition(int level)//常量定义
 
 			if(lex_sym=="char")//词法分析的时候随便给了一个值
 			{
-				if(!symbtable_enter(constname,"const","char",lex_value,level,0,0))
+				if(!symbtable_enter(constname,"const","char",lex_value,0))
 					return 0;
 				lex_getsym();
 			}
@@ -40,7 +40,7 @@ int parser_constdefinition(int level)//常量定义
 				lex_getsym();
 				if(lex_sym=="digit")
 				{
-					if(!symbtable_enter(constname,"const","integer",lex_value*mark,level,0,0))
+					if(!symbtable_enter(constname,"const","integer",lex_value*mark,0))
 						return 0;
 					lex_getsym();
 				}
@@ -52,7 +52,7 @@ int parser_constdefinition(int level)//常量定义
 			}
 			else if(lex_sym=="digit")
 			{
-				if(!symbtable_enter(constname,"const","integer",lex_value,level,0,0))
+				if(!symbtable_enter(constname,"const","integer",lex_value,0))
 					return 0;
 				lex_getsym();
 			}
@@ -114,13 +114,14 @@ int parser_constdeclaration(int level)
 //int symbtable_enter(string name,kind,type,int value,level,size,adr,para_ifvar)
 int parser_vardefinition(int level)
 {
-	int start,size=0;
+	int size=0;
+	symbItem *start;
 	string consttype;
 	if(lex_sym=="ident")
 	{
 		//constname=lex_token;
-		start=symbtable_i;
-		if(!symbtable_enter(lex_token,"var","",0,level,0,0))
+		start=symbtable_now->last_item;
+		if(!symbtable_enter(lex_token,"var","",0,0))
 			return 0;
 		lex_getsym();
 		while(lex_sym==",")
@@ -133,7 +134,7 @@ int parser_vardefinition(int level)
 			}
 			else
 			{
-				if(!symbtable_enter(lex_token,"var","",0,level,0,0))
+				if(!symbtable_enter(lex_token,"var","",0,0))
 					return 0;
 				lex_getsym();
 			}
@@ -194,16 +195,16 @@ int parser_vardefinition(int level)
 					return 0;
 			}
 		}
-
-		for(int i=start;i<symbtable_i;i++)//反填
+		symbItem *tmp=start->link;
+		while(tmp!=NULL)
 		{
-			symbtable_table[i].type=consttype;
-			symbtable_table[i].size=size;
+			tmp->type=consttype;
+			tmp->size=size;
 			if(if_array)
 			{
-				symbtable_table[i].kind="array";
-				
+				tmp->kind="array";
 			}
+			tmp=tmp->link;
 		}
 		if_array=0;
 		lex_getsym();
@@ -256,7 +257,8 @@ int parser_vardeclaration(int level)
 
 int parser_functionheader(int &level)
 {
-	int para_size=0,start=symbtable_i;
+	int para_size=0;
+	symbItem *start=symbtable_now->last_item;
 	string testset[]={"",":"};
 	string functype;
 	if(lex_sym!="ident")
@@ -266,9 +268,9 @@ int parser_functionheader(int &level)
 	}
 	else
 	{
-		if(!symbtable_enter(lex_token,"function","",0,level,0,0))
+		if(!symbtable_enter(lex_token,"function","",0,0))
 			return 0;
-		level++;
+		symbtable_new_level(lex_token);
 		lex_getsym();
 		if(lex_sym!=":")
 		{
@@ -297,8 +299,8 @@ int parser_functionheader(int &level)
 		functype=lex_sym;
 		lex_getsym();
 		
-		symbtable_table[start].size=para_size;
-		symbtable_table[start].type=functype;
+		start->link->size=para_size;
+		start->link->type=functype;
 		if(lex_sym!=";")
 		{
 			global_error(11,"");
@@ -311,7 +313,8 @@ int parser_functionheader(int &level)
 
 int parser_procedureheader(int &level)
 {
-	int para_size=0,start=symbtable_i;
+	int para_size=0;
+	symbItem *start=symbtable_now->last_item;
 	string procename;
 	string testset[]={"",";"};
 	if(lex_sym!="ident")
@@ -321,9 +324,9 @@ int parser_procedureheader(int &level)
 	}
 	else
 	{
-		if(!symbtable_enter(lex_token,"procedure","",0,level,0,0))
+		if(!symbtable_enter(lex_token,"procedure","",0,0))
 			return 0;
-		level++;//进入了新的一层
+		symbtable_new_level(lex_token);//进入了新的一层
 		lex_getsym();
 		if(lex_sym!=";")
 		{
@@ -348,7 +351,7 @@ int parser_procedureheader(int &level)
 		{
 			lex_getsym();
 		}
-		symbtable_table[start].size=para_size;		
+		start->link->size=para_size;		
 	}
 }
 
@@ -396,7 +399,8 @@ int parser_formalparalist(int level,int &para_size)
 
 int parser_formalparasection(int level,int &para_size)
 {
-	int paraifvar=0,start=symbtable_i;
+	int paraifvar=0;
+	symbItem *start=symbtable_now->last_item;
 	string paratype;
 	if(lex_sym=="var")
 	{
@@ -411,7 +415,7 @@ int parser_formalparasection(int level,int &para_size)
 	else
 	{
 		para_size++;
-		if(!symbtable_enter(lex_token,"parameter","",0,level,0,paraifvar))
+		if(!symbtable_enter(lex_token,"parameter","",0,paraifvar))
 			return 0;
 		lex_getsym();
 		while(lex_sym==",")
@@ -425,7 +429,7 @@ int parser_formalparasection(int level,int &para_size)
 			else
 			{
 				para_size++;
-				if(!symbtable_enter(lex_token,"parameter","",0,level,0,paraifvar))
+				if(!symbtable_enter(lex_token,"parameter","",0,paraifvar))
 					return 0;
 				lex_getsym();
 			}
@@ -444,8 +448,12 @@ int parser_formalparasection(int level,int &para_size)
 		else
 		{
 			paratype=lex_sym;
-			for(int i=start;i<symbtable_i;i++)
-				symbtable_table[i].type=paratype;
+			start=start->link;
+			while(start!=NULL)
+			{
+				start->type=paratype;
+				start=start->link;
+			}
 			lex_getsym();
 		}
 		if(lex_sym!=";")

@@ -3,14 +3,14 @@
 #include<string.h>
 #include<string>
 #include<iostream>
+#include<stdlib.h>
 #include<map>
 using namespace std;
 #define GLOBAL_MAX_ERROR_NUM 100
 #define LEX_W_NUM  32
 #define LEX_MAX_LINE 4096//每行最多的字符数
-#define SYMBTABLE_MAX_NUM 10000
 
-typedef struct symbtable{
+typedef struct symbItem{
 	string name;
 	string kind;//var,const,array,procedure,function?
 	string type;//char integer
@@ -19,7 +19,28 @@ typedef struct symbtable{
 	int adr;
 	int size;//func,proc,array
 	int para_ifvar;
-}symbtable;
+	struct symbItem *link;
+}symbItem;
+
+typedef struct symbTable{
+	string name;
+	int level;
+	symbItem *first_item;
+	symbItem *last_item;
+	struct symbTable *father;
+	struct symbTable *firstchild;
+	struct symbTable *lastchild;
+	struct symbTable *brother;
+}symbTable;
+
+extern symbTable *symbtable_table;
+extern symbTable *symbtable_now;
+int symbtable_find_dup(string name);
+void symbtable_up_level();
+void symbtable_new_level(string name);
+int symbtable_enter(string name,string kind,string type,int value,int para_ifvar);
+void symbtable_display();
+
 
 extern string global_err_message[];
 
@@ -38,12 +59,6 @@ extern char lex_line[];
 void lex_getch();
 int lex_getsym();
 
-extern int symbtable_adr;
-extern symbtable symbtable_table[];
-extern int symbtable_i;
-int symbtable_enter(string name,string kind,string type,int value,int level,int size,int para_ifvar);
-void symbtable_display();//const,var,array,function,procedure,parameter
-void symbtable_delete(int level);
 
 int parser_functionheader(int &level);
 int parser_constdefinition(int level);
