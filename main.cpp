@@ -2,33 +2,33 @@
 int main()
 {
 	sourcefile=fopen("test","r");
-	freopen("1","w",stdout);
 	lex_getch();
 	lex_getsym();
-	int level=0;
+//初始的时候就进入新的一层了
+	symbtable_new_level("main");
 	while(1)
 	{
 		if(lex_sym=="const")
 		{
 			lex_getsym();
-			parser_constdeclaration(level);		
+			parser_constdeclaration();
 		}
 		else if(lex_sym=="var")
 		{
 			lex_getsym();
-			parser_vardeclaration(level);
+			parser_vardeclaration();
 		}
 		else if(lex_sym=="")
 			break;
 		else if(lex_sym=="procedure")
 		{
 			lex_getsym();
-			parser_procedureheader(level);
+			parser_procedureheader();
 		}
 		else if(lex_sym=="function")
 		{
 			lex_getsym();
-			parser_functionheader(level);
+			parser_functionheader();
 		}
 		else
 		{

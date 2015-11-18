@@ -60,11 +60,11 @@ void lex_getch();
 int lex_getsym();
 
 
-int parser_functionheader(int &level);
-int parser_constdefinition(int level);
-int parser_constdeclaration(int level);
-int parser_vardefinition(int level);
-int parser_vardeclaration(int level);
-int parser_procedureheader(int &level);
-int parser_formalparalist(int level,int &para_size);
-int parser_formalparasection(int level,int &para_size);
+int parser_functionheader();
+int parser_constdefinition();
+int parser_constdeclaration();
+int parser_vardefinition();
+int parser_vardeclaration();
+int parser_procedureheader();
+int parser_formalparalist(int &para_size);
+int parser_formalparasection(int &para_size);

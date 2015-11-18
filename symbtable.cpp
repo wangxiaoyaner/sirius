@@ -12,6 +12,7 @@ int symbtable_find_dup(string name)
 	{
 		if(tmp->name==name)
 			return 1;
+		tmp=tmp->link;
 	}
 	return 0;
 }
@@ -24,7 +25,7 @@ void symbtable_up_level()
 void symbtable_new_level(string name)
 {
 	symbTable *childTable;
-	childTable=(symbTable*)malloc(sizeof(symbTable));
+	childTable=new symbTable();
 	childTable->name=name;
 	childTable->level=++symbtable_level;
 	childTable->first_item=NULL;
@@ -32,10 +33,12 @@ void symbtable_new_level(string name)
 	childTable->firstchild=NULL;
 	childTable->lastchild=NULL;
 	childTable->brother=NULL;
-	if(symbtable_table=NULL)
+	
+	if(symbtable_table==NULL)
 	{
 		childTable->father=NULL;
 		symbtable_table=childTable;	
+		symbtable_now=childTable;//初始化要做好
 	}
 	else
 		childTable->father=symbtable_now;
@@ -50,6 +53,7 @@ void symbtable_new_level(string name)
 		symbtable_now->lastchild=symbtable_now->lastchild->brother;
 	}
 	symbtable_now=childTable;
+	cout << symbtable_now->level << "debug"<<endl;
 	alltable[symbtable_level][alltable_j[symbtable_level]++]=childTable;
 }
 
@@ -58,16 +62,17 @@ void symbtable_new_level(string name)
 
 int symbtable_enter(string name,string kind,string type,int value,int para_ifvar)
 {
-	if(!symbtable_find_dup(name))
+	if(symbtable_find_dup(name))
 	{
 		global_error(5,"");
 		return 0;
 	}
-	symbItem *new_item=(symbItem*)malloc(sizeof(symbItem));
+	symbItem *new_item=new symbItem();
 	new_item->name=name;
 	new_item->kind=kind;
 	new_item->type=type;
 	new_item->value=value;
+	new_item->level=symbtable_level;//别丢了呀
 	new_item->para_ifvar=para_ifvar;
 	new_item->link=NULL;
 	if(symbtable_now->first_item==NULL)
@@ -80,22 +85,25 @@ int symbtable_enter(string name,string kind,string type,int value,int para_ifvar
 		symbtable_now->last_item->link=new_item;
 		symbtable_now->last_item=symbtable_now->last_item->link;
 	}
-	return 0;
+	return 1;
 }
 static void symbtable_print_single(symbTable *itable)
 {
 	symbItem *tmp=itable->first_item;
 	while(tmp!=NULL)
 	{
-		cout << "name:" << tmp->name << "\tlevel:" << tmp->level 
-			<< "\tkind"<< tmp->kind << "\ttype:"<< tmp->type 
-			<<"\tsize"<< tmp->size << "\tpara_ifvar"<<tmp->para_ifvar<< endl;
+		cout <<  tmp->name << "\t" << tmp->level 
+			<< "\t"<< tmp->kind << "\t"<< tmp->type 
+			<<"\t"<< tmp->size << "\t"<<tmp->para_ifvar<<"\t"<<tmp->value<<endl;
+		
 		tmp=tmp->link;
 	}
 
 }
 void symbtable_display()
-{
+{	
+	cout << "name\tlevel\tkind\ttype\tsize\tpara_ifvar\tvalue\n";
+
 	for(int i=0;i<90;i++)
 	{
 		for(int j=0;j<alltable_j[i];j++)

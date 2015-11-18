@@ -14,7 +14,7 @@ static void parser_test(string a[],int num)//寻找合法后继或者终止符�
 			lex_getsym();
 }
 
-int parser_constdefinition(int level)//常量定义
+int parser_constdefinition()//常量定义
 {
 	if(lex_sym=="ident")
 	{
@@ -32,7 +32,9 @@ int parser_constdefinition(int level)//常量定义
 			{
 				if(!symbtable_enter(constname,"const","char",lex_value,0))
 					return 0;
+
 				lex_getsym();
+				
 			}
 			else if(lex_sym=="+"||lex_sym=="-")
 			{
@@ -77,136 +79,137 @@ int parser_constdefinition(int level)//常量定义
 }
 
 
-int parser_constdeclaration(int level)
+int parser_constdeclaration()
 {
 	string testset[]={",",";",""};
-	if(!parser_constdefinition(level))//去找他的合法后继们
-	{
-		parser_test(testset,3);
-		if(lex_sym=="")//找到了终止符号集
-		{
-			global_error(11,"");
-			return 0;
-		}
-	}//读到了合法的后继之后就应该继续往下干。
-	while(lex_sym==",")
-	{
-		lex_getsym();
-		if(!parser_constdefinition(level))
-		{
-			parser_test(testset,3);
-			if(lex_sym=="")
-			{
-				global_error(11,"");
-				return 0;
-			}
-		}
-	}
-	if(lex_sym!=";")
+if(!parser_constdefinition())//去找他的合法后继们
+{
+	parser_test(testset,3);
+	if(lex_sym=="")//找到了终止符号集
 	{
 		global_error(11,"");
 		return 0;
 	}
+}//读到了合法的后继之后就应该继续往下干。
+while(lex_sym==",")
+{
 	lex_getsym();
-	return 1;
+	if(!parser_constdefinition())
+	{
+		parser_test(testset,3);
+		if(lex_sym=="")
+		{
+			global_error(11,"");
+			return 0;
+		}
+	}
+}
+
+if(lex_sym!=";")
+{
+	global_error(11,"");
+	return 0;
+}
+lex_getsym();
+return 1;
 }
 
 //int symbtable_enter(string name,kind,type,int value,level,size,adr,para_ifvar)
-int parser_vardefinition(int level)
+int parser_vardefinition()
 {
-	int size=0;
-	symbItem *start;
-	string consttype;
-	if(lex_sym=="ident")
+int size=0;
+symbItem *start;
+string consttype;
+if(lex_sym=="ident")
+{
+	//constname=lex_token;
+	if(!symbtable_enter(lex_token,"var","",0,0))
+		return 0;
+	start=symbtable_now->last_item;
+
+	lex_getsym();
+	while(lex_sym==",")
 	{
-		//constname=lex_token;
-		start=symbtable_now->last_item;
-		if(!symbtable_enter(lex_token,"var","",0,0))
-			return 0;
 		lex_getsym();
-		while(lex_sym==",")
+		if(lex_sym!="ident")
 		{
+			global_error(17,"");
+			return 0;
+		}
+		else
+		{
+			if(!symbtable_enter(lex_token,"var","",0,0))
+				return 0;
 			lex_getsym();
-			if(lex_sym!="ident")
+		}
+	}
+	if(lex_sym!=":")
+	{
+		global_error(18,"");
+		return 0;
+	}
+	lex_getsym();
+	if(lex_sym=="integer"||lex_sym=="char")
+		consttype=lex_sym;
+	else
+	{
+		if(lex_sym=="array")
+		{
+			if_array=1;
+			lex_getsym();
+			if(lex_sym!="[")
 			{
-				global_error(17,"");
+				global_error(12,"");
 				return 0;
 			}
 			else
+				lex_getsym();
+			if(lex_sym!="digit")
 			{
-				if(!symbtable_enter(lex_token,"var","",0,0))
-					return 0;
-				lex_getsym();
+				global_error(14,"");
+				return 0;
 			}
-		}
-		if(lex_sym!=":")
-		{
-			global_error(18,"");
-			return 0;
-		}
-		lex_getsym();
-		if(lex_sym=="integer"||lex_sym=="char")
-			consttype=lex_sym;
-		else
-		{
-			if(lex_sym=="array")
+			size=lex_value;
+			lex_getsym();
+			if(lex_sym!="]")
 			{
-				if_array=1;
-				lex_getsym();
-				if(lex_sym!="[")
-				{
-					global_error(12,"");
-					return 0;
-				}
-				else
-					lex_getsym();
-				if(lex_sym!="digit")
-				{
-					global_error(14,"");
-					return 0;
-				}
-				size=lex_value;
-				lex_getsym();
-				if(lex_sym!="]")
-				{
-					global_error(13,"");
-					return 0;
-				}
-				else
-					lex_getsym();
-				if(lex_sym!="of")
-				{
-					global_error(15,"");
-					//return 0;//允许变量定义的时候没有of
-				}
-				else
-					lex_getsym();
-				if(lex_sym=="integer"||lex_sym=="char")//这里你调试了很久
-					consttype=lex_sym;
-				else
-				{
-					global_error(16,"");
-					return 0;
-				}
+				global_error(13,"");
+				return 0;
 			}
-			else//!array,!integer,!char
+			else
+				lex_getsym();
+			if(lex_sym!="of")
+			{
+				global_error(15,"");
+				//return 0;//允许变量定义的时候没有of
+			}
+			else
+				lex_getsym();
+			if(lex_sym=="integer"||lex_sym=="char")//这里你调试了很久
+				consttype=lex_sym;
+			else
 			{
 				global_error(16,"");
-					return 0;
+				return 0;
 			}
 		}
-		symbItem *tmp=start->link;
-		while(tmp!=NULL)
+		else//!array,!integer,!char
 		{
-			tmp->type=consttype;
-			tmp->size=size;
-			if(if_array)
-			{
-				tmp->kind="array";
-			}
-			tmp=tmp->link;
+			global_error(16,"");
+				return 0;
 		}
-		if_array=0;
+	}
+	while(start!=NULL)
+	{
+		start->type=consttype;
+		start->size=size;
+		if(if_array)
+		{
+			start->kind="array";
+		}
+		start=start->link;
+	}
+	if_array=0;
 		lex_getsym();
 	}
 	else
@@ -216,10 +219,10 @@ int parser_vardefinition(int level)
 	}
 	return 1;
 }
-int parser_vardeclaration(int level)
+int parser_vardeclaration()
 {
 	string testset[]={"",";"};
-	if(!parser_vardefinition(level))
+	if(!parser_vardefinition())
 	{
 		parser_test(testset,2);
 		if(lex_sym=="")
@@ -236,7 +239,7 @@ int parser_vardeclaration(int level)
 	lex_getsym();
 	while(lex_sym=="ident")
 	{
-		if(!parser_vardefinition(level))
+		if(!parser_vardefinition())
 		{
 			parser_test(testset,2);
 			if(lex_sym=="")
@@ -255,10 +258,10 @@ int parser_vardeclaration(int level)
 //name,"procedure","",0,level,size,0,
 //过程首部
 
-int parser_functionheader(int &level)
+int parser_functionheader()
 {
 	int para_size=0;
-	symbItem *start=symbtable_now->last_item;
+	symbTable *start=symbtable_now;	
 	string testset[]={"",":"};
 	string functype;
 	if(lex_sym!="ident")
@@ -274,7 +277,7 @@ int parser_functionheader(int &level)
 		lex_getsym();
 		if(lex_sym!=":")
 		{
-			if(!parser_formalparalist(level,para_size))
+			if(!parser_formalparalist(para_size))
 			{
 				parser_test(testset,2);
 				if(lex_sym=="")
@@ -298,9 +301,8 @@ int parser_functionheader(int &level)
 		
 		functype=lex_sym;
 		lex_getsym();
-		
-		start->link->size=para_size;
-		start->link->type=functype;
+		start->last_item->size=para_size;//那是上一层的需要反填的东西。
+		start->last_item->type=functype;
 		if(lex_sym!=";")
 		{
 			global_error(11,"");
@@ -311,10 +313,10 @@ int parser_functionheader(int &level)
 
 }
 
-int parser_procedureheader(int &level)
+int parser_procedureheader()
 {
 	int para_size=0;
-	symbItem *start=symbtable_now->last_item;
+	symbTable *start=symbtable_now;
 	string procename;
 	string testset[]={"",";"};
 	if(lex_sym!="ident")
@@ -330,7 +332,7 @@ int parser_procedureheader(int &level)
 		lex_getsym();
 		if(lex_sym!=";")
 		{
-			if(!parser_formalparalist(level,para_size))
+			if(!parser_formalparalist(para_size))
 			{
 				parser_test(testset,2);
 				if(lex_sym=="")
@@ -351,11 +353,11 @@ int parser_procedureheader(int &level)
 		{
 			lex_getsym();
 		}
-		start->link->size=para_size;		
+		start->last_item->size=para_size;		
 	}
 }
 
-int parser_formalparalist(int level,int &para_size)
+int parser_formalparalist(int &para_size)
 {
 	string testset[]={"",";",")"};
 	if(lex_sym!="(")
@@ -366,7 +368,8 @@ int parser_formalparalist(int level,int &para_size)
 	else
 	{
 		lex_getsym();
-		if(!parser_formalparasection(level,para_size))
+		cout <<"no"<<lex_sym<< endl;
+		if(!parser_formalparasection(para_size))
 		{		
 			parser_test(testset,3);
 			if(lex_sym=="")
@@ -375,9 +378,11 @@ int parser_formalparalist(int level,int &para_size)
 				return 0;
 			}
 		}
+		cout << "I am here" << lex_sym << endl;
 		while(lex_sym==";")
 		{
-			if(!parser_formalparasection(level,para_size))
+			lex_getsym();
+			if(!parser_formalparasection(para_size))
 			{
 				parser_test(testset,3);
 				if(lex_sym=="")
@@ -397,10 +402,10 @@ int parser_formalparalist(int level,int &para_size)
 	return 1;
 }
 
-int parser_formalparasection(int level,int &para_size)
+int parser_formalparasection(int &para_size)
 {
 	int paraifvar=0;
-	symbItem *start=symbtable_now->last_item;
+	symbItem *start;
 	string paratype;
 	if(lex_sym=="var")
 	{
@@ -417,6 +422,7 @@ int parser_formalparasection(int level,int &para_size)
 		para_size++;
 		if(!symbtable_enter(lex_token,"parameter","",0,paraifvar))
 			return 0;
+		start=symbtable_now->last_item;
 		lex_getsym();
 		while(lex_sym==",")
 		{
@@ -448,7 +454,6 @@ int parser_formalparasection(int level,int &para_size)
 		else
 		{
 			paratype=lex_sym;
-			start=start->link;
 			while(start!=NULL)
 			{
 				start->type=paratype;
@@ -456,12 +461,13 @@ int parser_formalparasection(int level,int &para_size)
 			}
 			lex_getsym();
 		}
-		if(lex_sym!=";")
+		/*if(lex_sym!=";")
 		{
 			global_error(11,"348");
 			return 0;
 		}
-		lex_getsym();
+		lex_getsym();*/
+		cout << "I am her:"<<lex_sym<<endl;
 	}
 	return 1;
 }
