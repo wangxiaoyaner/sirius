@@ -18,6 +18,22 @@ int symbtable_find_dup(string name)
 }
 void symbtable_up_level()
 {
+	//需要作参数交换.
+	symbItem *parafirst,*paralast;
+//参数交换过程
+	symbTable *father=symbtable_now->father;
+	parafirst=symbtable_now->first_item;
+	if(parafirst!=NULL && parafirst->kind=="parameter")
+	{	
+		father->last_item->link=parafirst;
+		while(father->last_item->link!=NULL && father->last_item->link->kind=="parameter")
+		{
+			symbtable_now->first_item=symbtable_now->first_item->link;
+			father->last_item=father->last_item->link;
+		}
+		father->last_item->link=NULL;	
+	}
+
 	if(symbtable_now!=NULL)//assert
 		symbtable_now=symbtable_now->father;
 	symbtable_level--;
@@ -56,8 +72,6 @@ void symbtable_new_level(string name)
 	alltable[symbtable_level][alltable_j[symbtable_level]++]=childTable;
 }
 
-//大部分东西都是需要回填的。
-//int symbtable_find_dup(string name)
 
 int symbtable_enter(string name,string kind,string type,int value,int para_ifvar)
 {
