@@ -53,7 +53,6 @@ void symbtable_new_level(string name)
 		symbtable_now->lastchild=symbtable_now->lastchild->brother;
 	}
 	symbtable_now=childTable;
-	cout << symbtable_now->level << "debug"<<endl;
 	alltable[symbtable_level][alltable_j[symbtable_level]++]=childTable;
 }
 

@@ -368,7 +368,6 @@ int parser_formalparalist(int &para_size)
 	else
 	{
 		lex_getsym();
-		cout <<"no"<<lex_sym<< endl;
 		if(!parser_formalparasection(para_size))
 		{		
 			parser_test(testset,3);
@@ -378,7 +377,6 @@ int parser_formalparalist(int &para_size)
 				return 0;
 			}
 		}
-		cout << "I am here" << lex_sym << endl;
 		while(lex_sym==";")
 		{
 			lex_getsym();
@@ -461,13 +459,7 @@ int parser_formalparasection(int &para_size)
 			}
 			lex_getsym();
 		}
-		/*if(lex_sym!=";")
-		{
-			global_error(11,"348");
-			return 0;
-		}
-		lex_getsym();*/
-		cout << "I am her:"<<lex_sym<<endl;
+		lex_getsym();
 	}
 	return 1;
 }
