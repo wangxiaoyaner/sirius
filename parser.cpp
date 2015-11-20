@@ -1,5 +1,7 @@
 #include"global.h"
 static int if_array=0;
+static stack<symbItem*> operand_stack; 
+static int tmpvarcode=1;//为产生新的中间变量进行编号。//_num
 static int parser_ifintestset(string a[],int num,string target)//检查target是否在num个元素的a里
 {
 	for(int i=0;i<num;i++)
@@ -12,6 +14,23 @@ static void parser_test(string a[],int num)//寻找合法后继或者终止符�
 {
 	while(!parser_ifintestset(a,num,lex_sym))
 			lex_getsym();
+}
+
+static string numtostring(int num)
+{
+	stringstream tmp;
+	string res;
+	tmp << num;
+	tmp >> res;
+	return res;
+}
+
+static void parser_create_new_var()
+{
+	string name="_";
+	name+=numtostring(tmpvarcode++);
+	if(!symbtable_enter(name,"var","integer",0,0))//assert
+		cout << "Error:parser_create_new_var_symbtable_enter"<< endl;
 }
 
 int parser_constdefinition()//常量定义
@@ -72,7 +91,7 @@ int parser_constdefinition()//常量定义
 	}
 	else
 	{
-		global_error(10,"");//常量定义开头是标识符
+		global_error(17,"");//常量定义开头是标识符
 		return 0;
 	}
 	return 1;
@@ -214,7 +233,7 @@ if(lex_sym=="ident")
 	}
 	else
 	{
-		global_error(10,"");//变量定义开头是标识符
+		global_error(17,"");//变量定义开头是标识符
 		return 0;
 	}
 	return 1;
@@ -464,4 +483,136 @@ int parser_formalparasection(int &para_size)
 	return 1;
 }
 
+//表达式，假设没有函数调用语句
+//整个表达式
+int parser_expression()
+{
+	symbItem *src1,*src2,*ans;
+	string opr;
+	int if_low_zero=0;
+	if(lex_sym=="-"||lex_sym=="+")
+	{
+		if_low_zero=(lex_sym=="-")?1:0;
+		lex_getsym();
+	}
+	if(!parser_term(if_low_zero))
+		return 0;
+	while(lex_sym=="-"||lex_sym=="+")//需要一个新的变量了。
+	{
+		opr=lex_sym;	
+		lex_getsym();
+		if(!parser_term(if_low_zero))
+			return 0;
+		src2=operand_stack.top();
+		operand_stack.pop();
+		src1=operand_stack.top();
+		operand_stack.pop();
+		parser_create_new_var();//建立一个新表项。
+		ans=symbtable_now->last_item;
+		global_new_quadRuple(opr,src1,src2,ans);
+		cout << opr <<'\t'<<src1->name <<'\t'<<src2->name <<'\t'<<ans->name<<'\t'<<endl;
+		operand_stack.push(ans);
+	}
+	return 1;
+}
+int parser_term(int &if_low_zero)//NECx8里的取反指令
+{
+	symbItem *src1,*src2,*ans;
+	string opr;
+	if(!parser_factor())
+		return 0;
+	if(if_low_zero)
+	{
+		parser_create_new_var();
+		ans=symbtable_now->last_item;
+		src1=operand_stack.top();
+		operand_stack.pop();
+		global_new_quadRuple("assign",src1,NULL,ans);
+		global_new_quadRuple("neg",NULL,NULL,ans);
+		operand_stack.push(ans);
+		if_low_zero=0;
+	}
+	while(lex_sym=="*"||lex_sym=="/")
+	{
+		opr=lex_sym;
+		lex_getsym();
+		if(!parser_factor())
+			return 0;
+		parser_create_new_var();
+		ans=symbtable_now->last_item;
+		src2=operand_stack.top();
+		operand_stack.pop();
+		src1=operand_stack.top();
+		operand_stack.pop();
+		global_new_quadRuple(opr,src1,src2,ans);
+		operand_stack.push(ans);
+	}
+	return 1;
+}
 
+int parser_factor()
+{
+	symbItem *operand;
+	if(lex_sym=="ident")
+	{
+		operand=symbtable_check(lex_token);
+		if(operand==NULL)
+		{
+			global_error(21,lex_token);
+			return 0;
+		}
+		if(operand->kind=="array")//先放弃
+		{
+			lex_getsym();
+			if(lex_sym!="[")
+			{
+				global_error(12,"array");
+				return 0;
+			}
+			lex_getsym();
+			if(!parser_expression())
+				return 0;
+//			symbItem
+			if(lex_sym!="]")
+			{
+				global_error(13,"array");
+				return 0;
+			}
+//			lex_getsym();
+		}
+		else//暂时不考虑function
+		{
+			operand_stack.push(operand);//获得操作数	
+		}
+	}
+	else if(lex_sym=="(")
+	{
+		lex_getsym();
+		if(!parser_expression())
+			return 0;
+		if(lex_sym!=")")
+		{
+			global_error(20,"");
+			return 0;
+		}
+//		lex_getsym();
+	}
+	else if(lex_sym=="digit")
+	{
+		symbItem *item=new symbItem();
+		item->name=numtostring(lex_value);
+		item->value=lex_value;
+		item->kind="constpool";
+		item->type="digit";//digit,char,string,lable
+		item->link=NULL;
+		operand_stack.push(item);
+		global_const_pool.push(item);//放到常量池里面
+	}
+	else
+	{
+		global_error(22,lex_sym);
+		return 0;
+	}
+	lex_getsym();
+	return 1;
+}

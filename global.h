@@ -5,6 +5,8 @@
 #include<iostream>
 #include<stdlib.h>
 #include<map>
+#include<stack>
+#include<sstream>
 using namespace std;
 #define GLOBAL_MAX_ERROR_NUM 100
 #define LEX_W_NUM  32
@@ -21,7 +23,13 @@ typedef struct symbItem{
 	int para_ifvar;
 	struct symbItem *link;
 }symbItem;
-
+typedef struct quadRuple{
+	string opr;
+	symbItem *src1;
+	symbItem *src2;
+	symbItem *ans;
+	struct quadRuple *link;
+}quadRuple;
 typedef struct symbTable{
 	string name;
 	int level;
@@ -35,12 +43,13 @@ typedef struct symbTable{
 
 extern symbTable *symbtable_table;
 extern symbTable *symbtable_now;
+symbItem* symbtable_check(string name);
 int symbtable_find_dup(string name);
 void symbtable_up_level();
 void symbtable_new_level(string name);
 int symbtable_enter(string name,string kind,string type,int value,int para_ifvar);
 void symbtable_display();
-
+extern stack<symbItem*> global_const_pool;
 
 extern string global_err_message[];
 
@@ -48,6 +57,11 @@ extern int global_lex_line_num;
 extern int global_error_num;
 void global_error(int err_no,string ident);
 
+extern quadRuple *quadruple_first;
+extern quadRuple *quadruple_last;
+
+void global_new_quadRuple(string opr,symbItem *src1,symbItem *src2,symbItem *ans);
+void global_quadruple_display();
 extern const string lex_words[];//直接判断，类型以lex_token命名。
 
 extern FILE *sourcefile,*out;
@@ -68,3 +82,6 @@ int parser_vardeclaration();
 int parser_procedureheader();
 int parser_formalparalist(int &para_size);
 int parser_formalparasection(int &para_size);
+int parser_expression();
+int parser_term(int &if_low_zero);
+int parser_factor();

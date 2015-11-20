@@ -1,30 +1,35 @@
 #include"global.h"
+
+stack<symbItem*> global_const_pool;
 string global_err_message[]={"",//0
 	"Illegal char declaration",//1
 	"Missing single quotes",//2
 	"Illegal string declaration",//3
 	"Illegal character",//4
 	"Duplicate identifier",//5
-	"\'=\'should be in the back of identifier",//6
+	"\"=\"expected",//6
 	"\"=\"expected but \":=\" found",//7
 	"const should be integer or char",//8
 	"digit should be in the back of \"+\"or\"-\"",//9
-	"constdeclaration should be started with identifier",//10
+	"constdeclaration should be started with identifier",//10xxx
 	"\";\" expected",//11
 	"\"[\" expected",//12
 	"\"]\" expected",//13
-	"small int expected",//14
+	"small int expected",//14xxx
 	"\"of\" expected",//15
 	"type expected",//16
 	"identifier expected",//17
 	"\":\" expected",//18
 	"\"(\" expected",//19
-	"\")\" expected"//20
+	"\")\" expected",//20
+	"Identifier not declared in this scope",//21
+	"Illegal factor"//22
 
 };
 
-int global_lex_line_num=0;
 
+
+int global_lex_line_num=0;
 
 int global_error_num=1;
 
@@ -35,4 +40,51 @@ void global_error(int err_no,string ident)
 		cout << "error "<< global_error_num++ <<" : line[" << global_lex_line_num << "]   " << global_err_message[err_no] <<" "<<ident<<"\n";
 	lasterrorline=global_lex_line_num;
 }
-	
+//链表形式的四元式，先做一下实验
+quadRuple *quadruple_first=NULL,*quadruple_last=NULL;
+
+void global_new_quadRuple(string opr,symbItem *src1,symbItem *src2,symbItem *ans)
+{	
+	quadRuple *newitem;
+	newitem=new quadRuple();
+	newitem->opr=opr;
+	newitem->src1=src1;
+	newitem->src2=src2;
+	newitem->ans=ans;
+	newitem->link=NULL;
+	if(quadruple_first==NULL)
+	{
+		quadruple_first=newitem;
+		quadruple_last=newitem;
+	}
+	else
+	{
+		quadruple_last->link=newitem;
+		quadruple_last=quadruple_last->link;
+	}
+}
+void global_quadruple_display()
+{
+	quadRuple *tmp=quadruple_first;
+	while(tmp!=NULL)
+	{
+		cout << tmp->opr <<'\t';
+		if(tmp->src1)
+			cout<<tmp->src1->name<<'\t';
+		if(tmp->src2)
+			cout<<tmp->src2->name<<'\t';
+		if(tmp->ans)
+			cout<<tmp->ans->name<<endl;
+		tmp=tmp->link;
+	}
+}
+void global_const_pool_del()
+{
+	symbItem *tmp;
+	while(!global_const_pool.empty())
+	{
+		tmp=global_const_pool.top();
+		global_const_pool.pop();
+		delete tmp;
+	}
+}

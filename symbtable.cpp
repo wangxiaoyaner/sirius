@@ -4,7 +4,25 @@ symbTable *symbtable_now=NULL;
 static symbTable *alltable[100][100];
 static int alltable_j[100]={0};
 int symbtable_level=-1;
+symbItem* symbtable_check(string name)
+{
+	symbTable *tmp=symbtable_now;
+	symbItem *i;
+	while(tmp!=NULL)
+	{
+		i=tmp->first_item;
+		while(i!=NULL)
+		{
+			if(i->name==name)
+				return i;
+			i=i->link;
+		}
+		tmp=tmp->father;
+	}
+	return NULL;
+}
 //require:symbtable_now is not null;
+
 int symbtable_find_dup(string name)
 {
 	symbItem *tmp=symbtable_now->first_item;
@@ -113,6 +131,7 @@ static void symbtable_print_single(symbTable *itable)
 	}
 
 }
+
 void symbtable_display()
 {	
 	cout << "name\tlevel\tkind\ttype\tsize\tpara_ifvar\tvalue\n";

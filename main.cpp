@@ -30,6 +30,11 @@ int main()
 			lex_getsym();
 			parser_functionheader();
 		}
+		else if(lex_sym==":=")
+		{
+			lex_getsym();
+			parser_expression();
+		}
 		else
 		{
 			cout << "wrong";
@@ -38,5 +43,6 @@ int main()
 			
 	}
 	symbtable_display();
+	global_quadruple_display();
 	return 0;
 }
