@@ -101,3 +101,18 @@ void global_const_pool_del()
 		delete tmp;
 	}
 }
+map<string,string> global_anti_ralation;
+map<string,string> global_ralation;
+global_anti_ralation[">"]="jle";
+global_anti_ralation[">="]="jl";
+global_anti_ralation["<="]="jg";
+global_anti_ralation["<"]="jge";
+global_anti_ralation["="]="jne";
+global_anti_ralation["<>"]="je";
+
+global_ralation[">"]="jg";
+global_ralation[">="]="jge";
+global_ralation["<="]="jle";
+global_ralation["<"]="jl";
+global_ralation["="]="je";
+global_ralation["<>"]="jne";

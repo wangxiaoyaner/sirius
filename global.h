@@ -64,6 +64,8 @@ void global_new_quadruple(string opr,symbItem *src1,symbItem *src2,symbItem *ans
 void global_quadruple_display();
 extern const string lex_words[];//直接判断，类型以lex_token命名。
 
+//parser_create_new_lable();numtostring;void parser_create_new_var
+
 extern FILE *sourcefile,*out;
 extern string lex_token,lex_sym;
 extern int single_quote_mark;
@@ -73,6 +75,8 @@ extern char lex_line[];
 void lex_getch();
 int lex_getsym();
 
+extern map<string,string> global_anti_ralation;
+extern map<string,string> global_ralation;
 
 int parser_functionheader();
 int parser_constdefinition();
@@ -85,3 +89,6 @@ int parser_formalparasection(int &para_size);
 int parser_expression();
 int parser_term(int &if_low_zero);
 int parser_factor();
+int parser_statement();
+int parser_condition(symbItem **src1,symbItem **src2,string &opranme);
+int parser_realparameterlist(symbItem *func_proc);//实在参数表
