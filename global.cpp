@@ -11,11 +11,11 @@ string global_err_message[]={"",//0
 	"\"=\"expected but \":=\" found",//7
 	"const should be integer or char",//8
 	"digit should be in the back of \"+\"or\"-\"",//9
-	"constdeclaration should be started with identifier",//10xxx
+	"\"begin\" expected",//10
 	"\";\" expected",//11
 	"\"[\" expected",//12
 	"\"]\" expected",//13
-	"small int expected",//14xxx
+	"\"end\" expected",//14
 	"\"of\" expected",//15
 	"type expected",//16
 	"identifier expected",//17
@@ -23,8 +23,21 @@ string global_err_message[]={"",//0
 	"\"(\" expected",//19
 	"\")\" expected",//20
 	"Identifier not declared in this scope",//21
-	"Illegal factor"//22
-
+	"Illegal factor",//22
+    "Illegal statement",//23
+    "\"then\" expected",//24
+    "change const.",//25
+    "Array access violation",//26
+    "\":=\"expected but \"=\" found",//27
+    "relational operators expected",//28
+    "\"while\" expected",//29
+    "Parameter transfer error",//30
+    "\"\"\"expected",//31
+    "Read object error",//32
+    "\"downto\" or \"to\" expected",//33
+    "\"do\" expected",//34
+    "\",\" expected",//35
+	"\":=\" expected"//36
 };
 
 
@@ -41,12 +54,12 @@ void global_error(int err_no,string ident)
 	lasterrorline=global_lex_line_num;
 }
 //链表形式的四元式，先做一下实验
-quadRuple *quadruple_first=NULL,*quadruple_last=NULL;
+quadruple *quadruple_first=NULL,*quadruple_last=NULL;
 
-void global_new_quadRuple(string opr,symbItem *src1,symbItem *src2,symbItem *ans)
+void global_new_quadruple(string opr,symbItem *src1,symbItem *src2,symbItem *ans)
 {	
-	quadRuple *newitem;
-	newitem=new quadRuple();
+	quadruple *newitem;
+	newitem=new quadruple();
 	newitem->opr=opr;
 	newitem->src1=src1;
 	newitem->src2=src2;
@@ -65,7 +78,7 @@ void global_new_quadRuple(string opr,symbItem *src1,symbItem *src2,symbItem *ans
 }
 void global_quadruple_display()
 {
-	quadRuple *tmp=quadruple_first;
+	quadruple *tmp=quadruple_first;
 	while(tmp!=NULL)
 	{
 		cout << tmp->opr <<'\t';

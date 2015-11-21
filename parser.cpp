@@ -1,6 +1,6 @@
 #include"global.h"
 static int if_array=0;
-static stack<symbItem*> operand_stack; 
+static stack<symbItem*> operand_stack;
 static int tmpvarcode=1;//为产生新的中间变量进行编号。//_num
 static int parser_ifintestset(string a[],int num,string target)//检查target是否在num个元素的a里
 {
@@ -53,7 +53,7 @@ int parser_constdefinition()//常量定义
 					return 0;
 
 				lex_getsym();
-				
+
 			}
 			else if(lex_sym=="+"||lex_sym=="-")
 			{
@@ -280,7 +280,7 @@ int parser_vardeclaration()
 int parser_functionheader()
 {
 	int para_size=0;
-	symbTable *start=symbtable_now;	
+	symbTable *start=symbtable_now;
 	string testset[]={"",":"};
 	string functype;
 	if(lex_sym!="ident")
@@ -317,7 +317,7 @@ int parser_functionheader()
 			global_error(16,"");
 			return 0;
 		}
-		
+
 		functype=lex_sym;
 		lex_getsym();
 		start->last_item->size=para_size;//那是上一层的需要反填的东西。
@@ -372,7 +372,7 @@ int parser_procedureheader()
 		{
 			lex_getsym();
 		}
-		start->last_item->size=para_size;		
+		start->last_item->size=para_size;
 	}
 }
 
@@ -388,7 +388,7 @@ int parser_formalparalist(int &para_size)
 	{
 		lex_getsym();
 		if(!parser_formalparasection(para_size))
-		{		
+		{
 			parser_test(testset,3);
 			if(lex_sym=="")
 			{
@@ -499,7 +499,7 @@ int parser_expression()
 		return 0;
 	while(lex_sym=="-"||lex_sym=="+")//需要一个新的变量了。
 	{
-		opr=lex_sym;	
+		opr=lex_sym;
 		lex_getsym();
 		if(!parser_term(if_low_zero))
 			return 0;
@@ -509,7 +509,7 @@ int parser_expression()
 		operand_stack.pop();
 		parser_create_new_var();//建立一个新表项。
 		ans=symbtable_now->last_item;
-		global_new_quadRuple(opr,src1,src2,ans);
+		global_new_quadruple(opr,src1,src2,ans);
 		cout << opr <<'\t'<<src1->name <<'\t'<<src2->name <<'\t'<<ans->name<<'\t'<<endl;
 		operand_stack.push(ans);
 	}
@@ -527,8 +527,8 @@ int parser_term(int &if_low_zero)//NECx8里的取反指令
 		ans=symbtable_now->last_item;
 		src1=operand_stack.top();
 		operand_stack.pop();
-		global_new_quadRuple("assign",src1,NULL,ans);
-		global_new_quadRuple("neg",NULL,NULL,ans);
+		global_new_quadruple("assign",src1,NULL,ans);
+		global_new_quadruple("neg",NULL,NULL,ans);
 		operand_stack.push(ans);
 		if_low_zero=0;
 	}
@@ -544,7 +544,7 @@ int parser_term(int &if_low_zero)//NECx8里的取反指令
 		operand_stack.pop();
 		src1=operand_stack.top();
 		operand_stack.pop();
-		global_new_quadRuple(opr,src1,src2,ans);
+		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
 	return 1;
@@ -582,7 +582,7 @@ int parser_factor()
 		}
 		else//暂时不考虑function
 		{
-			operand_stack.push(operand);//获得操作数	
+			operand_stack.push(operand);//获得操作数
 		}
 	}
 	else if(lex_sym=="(")
@@ -616,3 +616,139 @@ int parser_factor()
 	lex_getsym();
 	return 1;
 }
+int parser_statement()
+{
+	symbItem *tmp;
+	if(lex_sym=="ident")//
+	{
+		tmp=symbtable_check(lex_token);
+		if(tmp==NULL)//他么还没定义就敢用
+		{
+			global_error(21,"");
+			return 0;
+		}
+		if(tmp->kind=="const")
+		{
+			global_error(25,"");
+			return 0;
+		}
+		else if(tmp->kind=="var")
+		{
+			lex_getsym();
+			if(lex_sym==":="||lex_sym=="=")
+			{
+				if(lex_sym=="=")
+					global_error(27,"");
+			}
+			else
+			{
+				global_error(36,"");
+				return 0;
+			}
+			lex_getsym();
+			//static stack<symbItem*> operand_stack;
+
+			if(!parser_expression())
+			{
+				return 0;//你特么语句久错了还好意思往下作。。。
+			}
+
+			symbItem *expre=operand_stack.top();
+			operand_stack.pop();
+			global_new_quadruple("assign",expre,NULL,tmp);
+		}//读字符的工作在分支内完成。
+		else if(tmp->kind=="array")
+		{//tmp [src1]
+			lex_getsym();
+			if(lex_sym!="[")
+			{
+				global_error(12,"");
+				return 0
+			}
+			les_getsym();
+			if(!parser_expression())//表达式的结果是可能是一个变量，你不可能知道数组越界否。
+				return 0;
+            symbItem *src2=operand_stack.top();
+            operand_stack.pop();
+			if(lex_sym!="]")
+			{
+                global_error(13,"");
+                return 0;
+			}
+			lex_getsym();
+			if(lex_sym==":="||lex_sym=="=")
+            {
+                if(lex_sym=="=")
+                    error(27,"")
+            }
+            else
+            {
+                global_error(36,"");
+                return 0;
+            }
+            lex_getsym();
+            if(!parser_expression())
+                return 0;
+            symbItem *ans=operand_stack.top();
+            operand_stack.pop();
+            global_new_quadruple("sarray",tmp,src2,ans);//tmp[src2]=ans
+		}
+		else if(tmp->kind=="function")//函数标示符=表达式
+        {
+        }
+        else if(tmp->kind=="procedure")
+        {
+
+        }
+        else
+        {
+            global_error(0,"whh");
+            return 0;
+        }
+	}
+	else if(lex_sym=="if")//
+    {
+        lex_getsym();
+        if(!parser_condition())
+            return 0;
+    }
+}
+/*
+if a>b then  c=a+b else c=a-b
+jle a,b lable1
+then
+c=a+b<语句>
+jmp lable2
+lable1:
+else
+c=a-b<语句>
+lable2:
+if a>b then c=a+b
+jle a,b,lable1
+c=a+b<语句>
+lable1:
+
+*/
+int parser_condition()
+{
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

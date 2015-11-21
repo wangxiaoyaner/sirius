@@ -23,13 +23,13 @@ typedef struct symbItem{
 	int para_ifvar;
 	struct symbItem *link;
 }symbItem;
-typedef struct quadRuple{
+typedef struct quadruple{
 	string opr;
 	symbItem *src1;
 	symbItem *src2;
 	symbItem *ans;
-	struct quadRuple *link;
-}quadRuple;
+	struct quadruple *link;
+}quadruple;
 typedef struct symbTable{
 	string name;
 	int level;
@@ -57,10 +57,10 @@ extern int global_lex_line_num;
 extern int global_error_num;
 void global_error(int err_no,string ident);
 
-extern quadRuple *quadruple_first;
-extern quadRuple *quadruple_last;
+extern quadruple *quadruple_first;
+extern quadruple *quadruple_last;
 
-void global_new_quadRuple(string opr,symbItem *src1,symbItem *src2,symbItem *ans);
+void global_new_quadruple(string opr,symbItem *src1,symbItem *src2,symbItem *ans);
 void global_quadruple_display();
 extern const string lex_words[];//直接判断，类型以lex_token命名。
 
