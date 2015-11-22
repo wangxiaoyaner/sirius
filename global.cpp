@@ -41,7 +41,8 @@ string global_err_message[]={"",//0
 	"ident can not be changed in for branch",//37
 	"return value can not be changed ",//38
 	"procedure can not be assigned",//39
-	"\"\.\"expeceted"
+	"\".\"expeceted",//40
+	"begin expeceted in a procedure"//41
 };
 
 
@@ -91,7 +92,8 @@ void global_quadruple_display()
 		if(tmp->src2)
 			cout<<tmp->src2->name<<'\t';
 		if(tmp->ans)
-			cout<<tmp->ans->name<<endl;
+			cout<<tmp->ans->name;
+		cout << endl;
 		tmp=tmp->link;
 	}
 }
@@ -107,16 +109,18 @@ void global_const_pool_del()
 }
 map<string,string> global_anti_ralation;
 map<string,string> global_ralation;
-global_anti_ralation[">"]="jle";
-global_anti_ralation[">="]="jl";
-global_anti_ralation["<="]="jg";
-global_anti_ralation["<"]="jge";
-global_anti_ralation["="]="jne";
-global_anti_ralation["<>"]="je";
+void global_init(){
+	global_anti_ralation[">"]="jle";
+	global_anti_ralation[">="]="jl";
+	global_anti_ralation["<="]="jg";
+	global_anti_ralation["<"]="jge";
+	global_anti_ralation["="]="jne";
+	global_anti_ralation["<>"]="je";
 
-global_ralation[">"]="jg";
-global_ralation[">="]="jge";
-global_ralation["<="]="jle";
-global_ralation["<"]="jl";
-global_ralation["="]="je";
-global_ralation["<>"]="jne";
+	global_ralation[">"]="jg";
+	global_ralation[">="]="jge";
+	global_ralation["<="]="jle";
+	global_ralation["<"]="jl";
+	global_ralation["="]="je";
+	global_ralation["<>"]="jne";
+}

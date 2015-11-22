@@ -92,7 +92,7 @@ void symbtable_new_level(string name)
 
 int symbtable_if_can_change_func(string name)
 {
-	symbTable *tmp=symbtalbe_now;
+	symbTable *tmp=symbtable_now;
 	while(tmp!=NULL)
 	{
 		if(tmp->name==name)

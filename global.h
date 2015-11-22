@@ -7,6 +7,7 @@
 #include<map>
 #include<stack>
 #include<sstream>
+#include<queue>
 using namespace std;
 #define GLOBAL_MAX_ERROR_NUM 100
 #define LEX_W_NUM  32
@@ -49,6 +50,8 @@ void symbtable_up_level();
 void symbtable_new_level(string name);
 int symbtable_enter(string name,string kind,string type,int value,int para_ifvar);
 void symbtable_display();
+int symbtable_if_can_change_func(string name);
+
 extern stack<symbItem*> global_const_pool;
 
 extern string global_err_message[];
@@ -56,7 +59,7 @@ extern string global_err_message[];
 extern int global_lex_line_num;
 extern int global_error_num;
 void global_error(int err_no,string ident);
-
+void global_init();
 extern quadruple *quadruple_first;
 extern quadruple *quadruple_last;
 
@@ -78,18 +81,5 @@ int lex_getsym();
 extern map<string,string> global_anti_ralation;
 extern map<string,string> global_ralation;
 
-int parser_c
-int parser_functionheader();
-int parser_constdefinition();
-int parser_constdeclaration();
-int parser_vardefinition();
-int parser_vardeclaration();
-int parser_procedureheader();
-int parser_formalparalist(int &para_size);
-int parser_formalparasection(int &para_size);
-int parser_expression();
-int parser_term(int &if_low_zero);
-int parser_factor();
-int parser_statement(symbItem *forbid);
-int parser_condition(symbItem **src1,symbItem **src2,string &opranme);
-int parser_realparameterlist(symbItem *func_proc);//实在参数表
+void parser_program();
+
