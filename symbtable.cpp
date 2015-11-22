@@ -90,6 +90,17 @@ void symbtable_new_level(string name)
 	alltable[symbtable_level][alltable_j[symbtable_level]++]=childTable;
 }
 
+int symbtable_if_can_change_func(string name)
+{
+	symbTable *tmp=symbtalbe_now;
+	while(tmp!=NULL)
+	{
+		if(tmp->name==name)
+			return 1;
+		tmp=tmp->father;
+	}
+	return 0;
+}
 
 int symbtable_enter(string name,string kind,string type,int value,int para_ifvar)
 {

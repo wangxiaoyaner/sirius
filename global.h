@@ -78,6 +78,7 @@ int lex_getsym();
 extern map<string,string> global_anti_ralation;
 extern map<string,string> global_ralation;
 
+int parser_c
 int parser_functionheader();
 int parser_constdefinition();
 int parser_constdeclaration();
@@ -89,6 +90,6 @@ int parser_formalparasection(int &para_size);
 int parser_expression();
 int parser_term(int &if_low_zero);
 int parser_factor();
-int parser_statement();
+int parser_statement(symbItem *forbid);
 int parser_condition(symbItem **src1,symbItem **src2,string &opranme);
 int parser_realparameterlist(symbItem *func_proc);//实在参数表

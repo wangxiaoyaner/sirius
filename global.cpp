@@ -37,7 +37,11 @@ string global_err_message[]={"",//0
     "\"downto\" or \"to\" expected",//33
     "\"do\" expected",//34
     "\",\" expected",//35
-	"\":=\" expected"//36
+	"\":=\" expected",//36
+	"ident can not be changed in for branch",//37
+	"return value can not be changed ",//38
+	"procedure can not be assigned",//39
+	"\"\.\"expeceted"
 };
 
 
