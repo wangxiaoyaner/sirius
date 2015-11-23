@@ -37,6 +37,7 @@ int symbtable_find_dup(string name)
 void symbtable_up_level()
 {
 	//需要作参数交换.
+	int i=0;//标明第几个参数
 	symbItem *parafirst,*paralast;
 //参数交换过程
 	symbTable *father=symbtable_now->father;
@@ -48,6 +49,8 @@ void symbtable_up_level()
 		{
 			symbtable_now->first_item=symbtable_now->first_item->link;
 			father->last_item=father->last_item->link;
+			father->last_item->level--;//参数建一层
+			father->last_item->adr=++i;
 		}
 		father->last_item->link=NULL;	
 	}

@@ -491,6 +491,12 @@ static int parser_functiondeclaration()
 			return 0;
 		}
 	}
+	if(lex_sym!=";")
+	{
+		global_error(11,"");
+		return 0;
+	}
+	lex_getsym();
 	return 1;
 }
 static int parser_proceduredeclaration()
@@ -656,7 +662,6 @@ static int parser_formalparasection(int &para_size)
 			}
 			lex_getsym();
 		}
-		lex_getsym();
 	}
 	return 1;
 }
@@ -775,10 +780,12 @@ static int parser_factor()//取得因此放到栈上
 			if(!operand->size)
 				lex_getsym();
 			else
+			{
 				if(!parser_realparameterlist(operand))
 					return 0;
+			}
 			global_new_quadruple("call",operand,NULL,NULL);
-			global_new_quadruple("assign",ans,NULL,operand);
+			global_new_quadruple("assign",operand,NULL,ans);
 			operand_stack.push(ans);
 		}
 		else
@@ -867,12 +874,10 @@ static int parser_statement(symbItem *forbid)
 			}
 			lex_getsym();
 			//static stack<symbItem*> operand_stack;
-
 			if(!parser_expression())
 			{
 				return 0;//你特么语句久错了还好意思往下作。。。
 			}
-
 			symbItem *expre=operand_stack.top();
 			operand_stack.pop();
 			global_new_quadruple("assign",expre,NULL,tmp);
@@ -926,7 +931,7 @@ static int parser_statement(symbItem *forbid)
 				global_error(36,"");
 				return 0;
 			}
-			if(lex_sym==":=")
+			if(lex_sym=="=")
 				global_error(7,"");
 			lex_getsym();
 			if(!parser_expression())
@@ -937,17 +942,21 @@ static int parser_statement(symbItem *forbid)
         }
         else if(tmp->kind=="procedure")//过程调用语句,tmp已经经过差表
         {
-			lex_getsym();
-			if(lex_sym=="("&&!tmp->size)
-			{
-				global_error(30,tmp->name);
-				return 0;
-			}
 			if(!tmp->size)
+			{
 				lex_getsym();
+				if(lex_sym=="(")
+				{
+					global_error(30,tmp->name);
+					return 0;
+				}
+			}
 			else
+			{
+				lex_getsym();
 				if(!parser_realparameterlist(tmp))
 					return 0;
+			}
 			global_new_quadruple("call",tmp,NULL,NULL);
         }
         else
@@ -1054,13 +1063,9 @@ static int parser_statement(symbItem *forbid)
 					global_new_quadruple("writed",operand_stack.top(),NULL,NULL);
 					operand_stack.pop();
 				}
-				if(lex_sym!=")")
-				{
-					global_error(20,"");
-					return 0;
-				}
-				lex_getsym();
+
 			}
+
 		}
 		else//表达式 
 		{
@@ -1078,14 +1083,14 @@ static int parser_statement(symbItem *forbid)
 				global_new_quadruple("writee",operand_stack.top(),NULL,NULL);
 				operand_stack.pop();
 			}
-			if(lex_sym!=")")
-			{
-				global_error(20,"");
-				return 0;
-			}
-			lex_getsym();
-		}
 
+		}
+		if(lex_sym!=")")
+		{
+			global_error(20,"");
+			return 0;
+		}
+		lex_getsym();
 	}
 	else if(lex_sym=="read")//func,var,para?
 	{
@@ -1274,12 +1279,14 @@ static int parser_realparameterlist(symbItem *func_proc)
 	
 	//require: enough para item in the global_table
 	int j=func_proc->size;
-	symbItem *k=func_proc;
+	symbItem *k=func_proc->link;
+	if(func_proc->name==symbtable_now->name)//调用自身此时符号表没调整。
+		k=symbtable_now->first_item;
 	for(int i=1;i<=j;i++)
 	{
 		src=para_queue.front();
 		para_queue.pop();
-		if(k->para_ifvar)
+		if(k->para_ifvar)//可能撤表了也可能没撤表
 			global_new_quadruple("rpara",src,NULL,NULL);
 		else
 			global_new_quadruple("fpara",src,NULL,NULL);
