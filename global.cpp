@@ -1,64 +1,18 @@
 #include"global.h"
 
 stack<symbItem*> global_const_pool;
-string global_err_message[]={"",//0
-	"Illegal char declaration",//1
-	"Missing single quotes",//2
-	"Illegal string declaration",//3
-	"Illegal character",//4
-	"Duplicate identifier",//5
-	"\"=\"expected",//6
-	"\"=\"expected but \":=\" found",//7
-	"const should be integer or char",//8
-	"digit should be in the back of \"+\"or\"-\"",//9
-	"\"begin\" expected",//10
-	"\";\" expected",//11
-	"\"[\" expected",//12
-	"\"]\" expected",//13
-	"\"end\" expected",//14
-	"\"of\" expected",//15
-	"type expected",//16
-	"identifier expected",//17
-	"\":\" expected",//18
-	"\"(\" expected",//19
-	"\")\" expected",//20
-	"Identifier not declared in this scope",//21
-	"Illegal factor",//22
-    "Illegal statement",//23
-    "\"then\" expected",//24
-    "change const.",//25
-    "Array access violation",//26
-    "\":=\"expected but \"=\" found",//27
-    "relational operators expected",//28
-    "\"while\" expected",//29
-    "Parameter transfer error",//30
-    "\"\"\"expected",//31
-    "Read object error",//32
-    "\"downto\" or \"to\" expected",//33
-    "\"do\" expected",//34
-    "\",\" expected",//35
-	"\":=\" expected",//36
-	"ident can not be changed in for branch",//37
-	"return value can not be changed ",//38
-	"procedure can not be assigned",//39
-	"\".\"expeceted",//40
-	"begin expeceted in a procedure"//41
-};
-
-
-
 int global_lex_line_num=0;
-
+int global_lex_lie_num=0;
 int global_error_num=1;
 
-int lasterrorline=-1;
-void global_error(int err_no,string ident)
+void global_error(string right,string wrong)
 {	
-	if(lasterrorline!=global_lex_line_num)
-		cout << "error "<< global_error_num++ <<" : line[" << global_lex_line_num << "]   " << global_err_message[err_no] <<" "<<ident<<"\n";
-	lasterrorline=global_lex_line_num;
+	cout << "error "<< global_error_num++ <<" : line[" << global_lex_line_num<<"," <<global_lex_lie_num<< "]   \"" << right <<"\" expected, but \""<<wrong<<"\" found\t\n";
 }
-//链表形式的四元式，先做一下实验
+void global_error(string words)
+{
+		cout << "error "<< global_error_num++ <<" : line[" << global_lex_line_num <<","<<global_lex_lie_num<< "]   " << words<<"\n";
+}
 quadruple *quadruple_first=NULL,*quadruple_last=NULL;
 
 void global_new_quadruple(string opr,symbItem *src1,symbItem *src2,symbItem *ans)

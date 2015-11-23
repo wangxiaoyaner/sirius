@@ -51,14 +51,12 @@ void symbtable_new_level(string name);
 int symbtable_enter(string name,string kind,string type,int value,int para_ifvar);
 void symbtable_display();
 int symbtable_if_can_change_func(string name);
-
 extern stack<symbItem*> global_const_pool;
-
-extern string global_err_message[];
-
 extern int global_lex_line_num;
+extern int global_lex_lie_num;
 extern int global_error_num;
-void global_error(int err_no,string ident);
+void global_error(string right,string wrong);
+void global_error(string words);
 void global_init();
 extern quadruple *quadruple_first;
 extern quadruple *quadruple_last;

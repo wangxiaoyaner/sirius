@@ -30,7 +30,7 @@ int lex_find_words(string goal)
 
 void lex_getch()
 {
-	if(lex_line[++lex_char_i]=='\n')
+	if(lex_line[lex_char_i]=='\n'||lex_line[++lex_char_i]=='\n')
 	{
 		if(fgets(lex_line,LEX_MAX_LINE,sourcefile)==NULL)
 		{
@@ -62,7 +62,7 @@ int lex_getsym()//lex_getch first
 		{
 			lex_token="";
 			lex_token+=lex_ch;
-			global_lex_line_num=lex_line_no;
+			global_lex_line_num=lex_line_no;global_lex_lie_num=lex_char_i;
 			lex_getch();
 			while(isalpha(lex_ch)||isdigit(lex_ch))
 			{
@@ -83,7 +83,7 @@ int lex_getsym()//lex_getch first
 		{
 			lex_token="";
 			lex_token+=lex_ch;
-			global_lex_line_num=lex_line_no;
+			global_lex_line_num=lex_line_no;global_lex_lie_num=lex_char_i;
 			lex_getch();
 			while(isdigit(lex_ch))
 			{
@@ -96,7 +96,7 @@ int lex_getsym()//lex_getch first
 		}	
 		else if(lex_ch=='<')//<,<>,<=
 		{
-			global_lex_line_num=lex_line_no;
+			global_lex_line_num=lex_line_no;global_lex_lie_num=lex_char_i;
 			lex_getch();
 			if(lex_ch=='>')
 			{
@@ -114,7 +114,7 @@ int lex_getsym()//lex_getch first
 		}
 		else if(lex_ch==':')
 		{
-			global_lex_line_num=lex_line_no;
+			global_lex_line_num=lex_line_no;global_lex_lie_num=lex_char_i;
 			lex_getch();
 			if(lex_ch=='=')
 			{
@@ -127,7 +127,7 @@ int lex_getsym()//lex_getch first
 		}
 		else if(lex_ch=='>')
 		{
-			global_lex_line_num=lex_line_no;
+			global_lex_line_num=lex_line_no;global_lex_lie_num=lex_char_i;
 			lex_getch();
 			if(lex_ch=='=')
 			{
@@ -140,7 +140,7 @@ int lex_getsym()//lex_getch first
 		}
 		else if(lex_ch=='\'')
 		{
-			global_lex_line_num=lex_line_no;
+			global_lex_line_num=lex_line_no;global_lex_lie_num=lex_char_i;
 			lex_getch();
 			lex_token="";
 			lex_value=lex_ch;
@@ -149,36 +149,36 @@ int lex_getsym()//lex_getch first
 				if(lex_mark)
 				{
 					lex_bye();
-					global_error(1,"");//缺引号
+					global_error("\'",""+lex_ch);//缺引号
 					return 0;
 				}
 				if(!isalpha(lex_ch)&&!isdigit(lex_ch))
 				{
-					global_error(1,"");//非法字符
+					global_error("legal character",""+lex_ch);//非法字符
 				}	
 				lex_token+=lex_ch;
 				lex_getch();
 			}
 			if(!lex_char_i&&lex_ch!='\'')
 			{
-				global_error(1,"");//字符常量定义错误
+				global_error("\'",""+lex_ch);//字符常量定义错误
 			}
 			if(lex_char_i&&lex_token.size()!=1)
 			{
-				global_error(1,"");//字符常量定义错误
+				global_error("single char",lex_token);//字符常量定义错误
 			}
 			lex_sym="char";
 			if(lex_ch=='\'')
 				lex_getch();
 			else
 				{
-					global_error(1,"");
+					global_error("legal charactor","illegal charactor");
 				}
 			return 1;
 		}
 		else if(lex_ch=='"')
 		{
-			global_lex_line_num=lex_line_no;
+			global_lex_line_num=lex_line_no;global_lex_lie_num=lex_char_i;
 			lex_getch();
 			lex_token="";
 			lex_sym="string";
@@ -192,7 +192,7 @@ int lex_getsym()//lex_getch first
 			if(lex_ch=='"')
 				lex_getch();
 			else
-				global_error(3,"");
+				global_error("\"",""+lex_ch);
 			return 1;
 		}
 		else if(lex_ch=='{')
@@ -216,13 +216,13 @@ int lex_getsym()//lex_getch first
 			lex_sym+=lex_ch;
 			if(lex_find_words(lex_sym))
 			{
-				global_lex_line_num=lex_line_no;
+				global_lex_line_num=lex_line_no;global_lex_lie_num=lex_char_i;
 				lex_getch();
 				return 1;//一眼能判别的分解符
 			}
 			else
 			{
-				global_error(4,"");
+				global_error("legal charater","illegal character");
 				lex_getch();
 			}
 		}

@@ -70,7 +70,6 @@ void symbtable_new_level(string name)
 	childTable->firstchild=NULL;
 	childTable->lastchild=NULL;
 	childTable->brother=NULL;
-	
 	if(symbtable_table==NULL)
 	{
 		childTable->father=NULL;
@@ -109,7 +108,7 @@ int symbtable_enter(string name,string kind,string type,int value,int para_ifvar
 {
 	if(symbtable_find_dup(name))
 	{
-		global_error(5,"");
+		global_error("Duplicate identifier: \""+name+"\".");
 		return 0;
 	}
 	symbItem *new_item=new symbItem();
@@ -153,6 +152,9 @@ void symbtable_display()
 	for(int i=0;i<90;i++)
 	{
 		for(int j=0;j<alltable_j[i];j++)
+		{
+			cout << "NAME:"<<alltable[i][j]->name<<endl;
 			symbtable_print_single(alltable[i][j]);
+		}
 	}
 }

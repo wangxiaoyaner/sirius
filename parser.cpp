@@ -27,12 +27,26 @@ static int parser_ifintestset(string a[],int num,string target)//检查target是
 	return 0;
 }
 //停止符号集仅仅管到结尾着一个，先不考虑明显的关键词
-static void parser_test(string a[],int num)//寻找合法后继或者终止符号集合
+static void  parser_test(string a[],int num)//寻找合法后继或者终止符号集合
 {
 	while(!parser_ifintestset(a,num,lex_sym))
-			lex_getsym();
+	{
+		lex_getsym();
+	}
 }
-
+static void parser_test(string a[],int num,int &flag)
+{
+	flag=0;
+	while(!parser_ifintestset(a,num,lex_sym))
+	{
+		lex_getsym();	
+		if(!flag)
+		{
+			global_error("Illegal parser in procedure");
+			flag=1;
+		}
+	}
+}
 static string numtostring(int num)
 {
 	stringstream tmp;
@@ -81,9 +95,12 @@ void parser_program()
 		parser_test(testset,2);
 		if(lex_sym=="")
 		{
-			global_error(40,"");
+			global_error(".","nothing");
+			return;
 		}
 	}
+	if(lex_sym!=".")
+		global_error(".","nothing");
 }
 static int parser_procedure()
 {
@@ -96,9 +113,19 @@ static int parser_procedure()
 			parser_test(testset,5);
 			if(lex_sym=="")
 			{
-				global_error(41,"");
+				global_error("begin","nothing");
 				return 0;
 			}
+		}
+	}
+	{
+		string testset[]={"","var","procedure","function","begin"};
+		int flag;
+		parser_test(testset,5,flag);
+		if(lex_sym=="")
+		{
+			global_error("begin","nothing");
+			return 0;
 		}
 	}
 	if(lex_sym=="var")
@@ -110,9 +137,19 @@ static int parser_procedure()
 			parser_test(testset,4);
 			if(lex_sym=="")
 			{
-				global_error(41,"");
+				global_error("begin","nothing");
 				return 0;
 			}
+		}
+	}
+	{
+		int flag;
+		string testset[]={"","procedure","function","begin"};
+		parser_test(testset,4,flag);
+		if(lex_sym=="")
+		{
+			global_error("begin","nothing");
+			return 0;
 		}
 	}
 	while(lex_sym=="function"||lex_sym=="procedure")
@@ -134,14 +171,24 @@ static int parser_procedure()
 			parser_test(testset,4);
 			if(lex_sym=="")
 			{
-				global_error(41,"");
+				global_error("begin","nothing");
 				return 0;
 			}
 		}
 	}
+	{
+		int flag;
+		string testset[]={"","begin"};
+		parser_test(testset,2,flag);
+		if(lex_sym=="")
+		{
+			global_error("begin","nothing");
+			return 0;
+		}
+	}
 	if(lex_sym!="begin")
 	{
-		global_error(41,"");
+		global_error("begin","nothing");
 		return 0;
 	}
 	lex_getsym();
@@ -151,6 +198,7 @@ static int parser_procedure()
 		return 0;
 	global_new_quadruple("ret",NULL,NULL,NULL);
 	symbtable_up_level();
+	cout << "This is procedure"<<endl;
 	return 1;
 }
 static int parser_compoundstatement()//require 读了begin 后面的一个单词
@@ -161,7 +209,7 @@ static int parser_compoundstatement()//require 读了begin 后面的一个单词
 		parser_test(testset,3);
 		if(lex_sym=="")
 		{
-			global_error(14,"");
+			global_error("end","nothing");
 			return 0;
 		}
 	}
@@ -173,18 +221,17 @@ static int parser_compoundstatement()//require 读了begin 后面的一个单词
 			parser_test(testset,3);
 			if(lex_sym=="")
 			{
-				global_error(14,"");
+				global_error("end","nothing");
 				return 0;
 			}
 		}
 	}
 	if(lex_sym!="end")
 	{
-		global_error(14,"");
+		global_error("end","nothing");
 		return 0;
 	}
 	lex_getsym();
-
 }
 static int parser_constdefinition()//常量定义
 {
@@ -192,19 +239,17 @@ static int parser_constdefinition()//常量定义
 	{
 		string constname=lex_token;
 		lex_getsym();
-		if(lex_sym=="="||lex_sym==":=")//简单矫正
+		if(lex_sym=="="||lex_sym==":=")
 		{
 			if(lex_sym==":=")
 			{
-				global_error(7,"");//是=不是：=
+				global_error("=",":=");//是=不是：=
 			}
 			lex_getsym();
-
-			if(lex_sym=="char")//词法分析的时候随便给了一个值
+			if(lex_sym=="char")
 			{
 				if(!symbtable_enter(constname,"const","char",lex_value,0))
 					return 0;
-
 				lex_getsym();
 
 			}
@@ -220,7 +265,7 @@ static int parser_constdefinition()//常量定义
 				}
 				else
 				{
-					global_error(9,"");//+-后面应该是数字
+					global_error("digit",lex_sym);//+-后面应该是数字
 					return 0;
 				}
 			}
@@ -232,21 +277,22 @@ static int parser_constdefinition()//常量定义
 			}
 			else
 			{
-				global_error(8,constname);//常量都没定义明白就不填表了。
+				global_error("const's value",lex_sym);//常量都没定义明白就不填表了。
 				return 0;
 			}
 		}
 		else
 		{
-			global_error(6,"");//标识符后面是=
+			global_error("=",lex_sym);//标识符后面是=
 			return 0;
 		}
 	}
 	else
 	{
-		global_error(17,"");//常量定义开头是标识符
+		global_error("ident",lex_sym);//常量定义开头是标识符
 		return 0;
 	}
+	cout << "this is const definition" << endl;
 	return 1;
 }
 
@@ -259,7 +305,7 @@ static int parser_constdeclaration()
 		parser_test(testset,3);
 		if(lex_sym=="")//找到了终止符号集
 		{
-			global_error(11,"");
+			global_error(";","nothing");
 			return 0;
 		}	
 	}//读到了合法的后继之后就应该继续往下干。
@@ -271,7 +317,7 @@ static int parser_constdeclaration()
 			parser_test(testset,3);
 			if(lex_sym=="")
 			{
-				global_error(11,"");
+				global_error(";","nothing");
 				return 0;
 			}
 		}
@@ -279,14 +325,15 @@ static int parser_constdeclaration()
 
 	if(lex_sym!=";")
 	{
-		global_error(11,"");
+		global_error(";","nothing");
+	//	string testset={"","var","function","procedure"}//找他的合法后继。。
 		return 0;
 	}
 	lex_getsym();
+	cout << "This is const declaration" << endl;
 	return 1;
 }
 
-//int symbtable_enter(string name,kind,type,int value,level,size,adr,para_ifvar)
 static int parser_vardefinition()
 {
 	int size=0;
@@ -294,7 +341,6 @@ static int parser_vardefinition()
 	string consttype;
 	if(lex_sym=="ident")
 	{
-	//constname=lex_token;
 		if(!symbtable_enter(lex_token,"var","",0,0))
 			return 0;
 		start=symbtable_now->last_item;
@@ -304,7 +350,7 @@ static int parser_vardefinition()
 			lex_getsym();
 			if(lex_sym!="ident")
 			{
-				global_error(17,"");
+				global_error("ident",lex_sym);
 				return 0;
 			}
 			else
@@ -316,7 +362,7 @@ static int parser_vardefinition()
 		}
 		if(lex_sym!=":")
 		{
-			global_error(18,"");
+			global_error(":",lex_sym);
 			return 0;
 		}
 		lex_getsym();
@@ -330,29 +376,28 @@ static int parser_vardefinition()
 				lex_getsym();
 				if(lex_sym!="[")
 				{
-					global_error(12,"");
+					global_error("[",lex_sym);
 					return 0;
 				}
 				else
 					lex_getsym();
 				if(lex_sym!="digit")
 				{
-					global_error(14,"");
+					global_error("digit",lex_sym);
 					return 0;
 				}
 				size=lex_value;
 				lex_getsym();
 				if(lex_sym!="]")
 				{
-					global_error(13,"");
+					global_error("]",lex_sym);
 					return 0;
 				}
 				else
 					lex_getsym();
 				if(lex_sym!="of")
 				{
-					global_error(15,"");
-					//return 0;//允许变量定义的时候没有of
+					global_error("of",lex_sym);
 				}
 				else
 					lex_getsym();
@@ -360,13 +405,13 @@ static int parser_vardefinition()
 					consttype=lex_sym;
 				else
 				{
-					global_error(16,"");
+					global_error("integer or char",lex_sym);
 					return 0;
 				}
 			}
 			else//!array,!integer,!char
 			{
-				global_error(16,"");
+				global_error("type",lex_sym);
 					return 0;
 			}
 		}
@@ -385,50 +430,34 @@ static int parser_vardefinition()
 	}
 	else
 	{
-		global_error(17,"");//变量定义开头是标识符
+		global_error("ident",lex_sym);//变量定义开头是标识符
 		return 0;
 	}
+	cout << "This is var definition" << endl;
 	return 1;
 }
 static int parser_vardeclaration()
 {
 	string testset[]={"",";"};
-	if(!parser_vardefinition())
-	{
-		parser_test(testset,2);
-		if(lex_sym=="")
-		{
-			global_error(11,"");
-			return 0;
-		}
-	}
-
-	if(lex_sym!=";")
-	{
-		global_error(11,"");
-	}
-	lex_getsym();
-	while(lex_sym=="ident")
-	{
+	do{
 		if(!parser_vardefinition())
 		{
 			parser_test(testset,2);
 			if(lex_sym=="")
 			{
-				global_error(11,"");
+				global_error(";","nothing");
 				return 0;
 			}
 		}
 		if(lex_sym!=";")
-			global_error(11,"");
+		{
+			global_error(";","nothing");
+		}
 		lex_getsym();
-	}
+	}while(lex_sym=="ident");
+	cout << "This is var declaration" << endl;
 	return 1;
 }
-//这里需要产生一条LABLE语句，但是我假定只有过程头部,已经验证过procedure且预读
-//name,"procedure","",0,level,size,0,
-//过程首部
-
 static int parser_functiondeclaration()
 {
 	int para_size=0;
@@ -437,7 +466,7 @@ static int parser_functiondeclaration()
 	string functype;
 	if(lex_sym!="ident")
 	{
-		global_error(16,"");
+		global_error("ident",lex_sym);
 		return 0;
 	}
 	else
@@ -453,20 +482,20 @@ static int parser_functiondeclaration()
 				parser_test(testset,2);
 				if(lex_sym=="")
 				{
-					global_error(18,"");
+					global_error(":","nothing");
 					return 0;
 				}
 			}
 			if(lex_sym!=":")
 			{
-				global_error(18,"");
+				global_error(":","nothing");
 				return 0;
 			}
-			lex_getsym();
 		}
+		lex_getsym();
 		if(lex_sym!="char"&&lex_sym!="integer")
 		{
-			global_error(16,"");
+			global_error("char or integer",lex_sym);
 			return 0;
 		}
 
@@ -476,7 +505,7 @@ static int parser_functiondeclaration()
 		start->last_item->type=functype;
 		if(lex_sym!=";")
 		{
-			global_error(11,"");
+			global_error(";",lex_sym);
 			return 0;
 		}
 		lex_getsym();
@@ -487,16 +516,17 @@ static int parser_functiondeclaration()
 		parser_test(testset,2);
 		if(lex_sym!="")
 		{
-			global_error(11,"");
+			global_error(";","nothing");
 			return 0;
 		}
 	}
 	if(lex_sym!=";")
 	{
-		global_error(11,"");
+		global_error(";",lex_sym);
 		return 0;
 	}
 	lex_getsym();
+	cout << "This is function declaration"<<endl;
 	return 1;
 }
 static int parser_proceduredeclaration()
@@ -507,14 +537,14 @@ static int parser_proceduredeclaration()
 	string testset[]={"",";"};
 	if(lex_sym!="ident")
 	{
-		global_error(16,"procedure declaration");
+		global_error("ident",lex_sym);
 		return 0;
 	}
 	else
 	{
 		if(!symbtable_enter(lex_token,"procedure","",0,0))
 			return 0;
-		symbtable_new_level(lex_token);//进入了新的一层
+		symbtable_new_level(lex_token);
 		lex_getsym();
 		if(lex_sym!=";")
 		{
@@ -523,22 +553,17 @@ static int parser_proceduredeclaration()
 				parser_test(testset,2);
 				if(lex_sym=="")
 				{
-					global_error(11,"277");
+					global_error(";","nothing");
 					return 0;
 				}
 			}
 			if(lex_sym!=";")
 			{
-				global_error(11,"284");
+				global_error(";",lex_sym);
 				return 0;
 			}
-			lex_getsym();
-
 		}
-		else
-		{
-			lex_getsym();
-		}
+		lex_getsym();
 		start->last_item->size=para_size;
 	}
 	if(!parser_procedure())
@@ -547,16 +572,17 @@ static int parser_proceduredeclaration()
 		parser_test(testset,2);
 		if(lex_sym=="")
 		{
-			global_error(11,"");
+			global_error(";","nothing");
 			return 0;
 		}
 	}
 	if(lex_sym!=";")
 	{
-		global_error(11,"");
+		global_error(";",lex_sym);
 		return 0;
 	}
 	lex_getsym();
+	cout << "This is procedure declaration" << endl;
 	return 1;
 }
 
@@ -565,41 +591,31 @@ static int parser_formalparalist(int &para_size)
 	string testset[]={"",";",")"};
 	if(lex_sym!="(")
 	{
-		global_error(19,"");
+		global_error("(",lex_sym);
 		return 0;
 	}
 	else
 	{
-		lex_getsym();
-		if(!parser_formalparasection(para_size))
-		{
-			parser_test(testset,3);
-			if(lex_sym=="")
-			{
-				global_error(20,"");
-				return 0;
-			}
-		}
-		while(lex_sym==";")
-		{
+		do{
 			lex_getsym();
 			if(!parser_formalparasection(para_size))
 			{
 				parser_test(testset,3);
 				if(lex_sym=="")
 				{
-					global_error(20,"");
+					global_error(")","nothing");
 					return 0;
 				}
 			}
-		}
+		}while(lex_sym==";");
 		if(lex_sym!=")")
 		{
-			global_error(20,"");
+			global_error(")",lex_sym);
 			return 0;
 		}
 		lex_getsym();
 	}
+	cout << "This is formal parameter list"<<endl;
 	return 1;
 }
 
@@ -615,7 +631,7 @@ static int parser_formalparasection(int &para_size)
 	}
 	if(lex_sym!="ident")
 	{
-		global_error(17,"305");
+		global_error("ident",lex_sym);
 		return 0;
 	}
 	else
@@ -630,7 +646,7 @@ static int parser_formalparasection(int &para_size)
 			lex_getsym();
 			if(lex_sym!="ident")
 			{
-				global_error(17,"318");
+				global_error("ident",lex_sym);
 				return 0;
 			}
 			else
@@ -643,13 +659,13 @@ static int parser_formalparasection(int &para_size)
 		}
 		if(lex_sym!=":")
 		{
-			global_error(18,"330");
+			global_error(":",lex_sym);
 			return 0;
 		}
 		lex_getsym();
 		if(lex_sym!="integer"&&lex_sym!="char")
 		{
-			global_error(16,"336");
+			global_error("char or integer",lex_sym);
 			return 0;
 		}
 		else
@@ -663,11 +679,10 @@ static int parser_formalparasection(int &para_size)
 			lex_getsym();
 		}
 	}
+	cout << "This is formal parameter section"<<endl;
 	return 1;
 }
 
-//表达式，假设没有函数调用语句
-//整个表达式
 static int parser_expression()
 {
 	symbItem *src1,*src2,*ans;
@@ -680,7 +695,7 @@ static int parser_expression()
 	}
 	if(!parser_term(if_low_zero))
 		return 0;
-	while(lex_sym=="-"||lex_sym=="+")//需要一个新的变量了。
+	while(lex_sym=="-"||lex_sym=="+")
 	{
 		opr=lex_sym;
 		lex_getsym();
@@ -690,14 +705,15 @@ static int parser_expression()
 		operand_stack.pop();
 		src1=operand_stack.top();
 		operand_stack.pop();
-		parser_create_new_var();//建立一个新表项。
+		parser_create_new_var();
 		ans=symbtable_now->last_item;
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
+	cout << "This is expression" << endl;
 	return 1;
 }
-static int parser_term(int &if_low_zero)//NECx8里的取反指令
+static int parser_term(int &if_low_zero)
 {
 	symbItem *src1,*src2,*ans;
 	string opr;
@@ -729,10 +745,11 @@ static int parser_term(int &if_low_zero)//NECx8里的取反指令
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
+	cout << "This is term" << endl;
 	return 1;
 }
 
-static int parser_factor()//取得因此放到栈上
+static int parser_factor()
 {
 	symbItem *operand;
 	if(lex_sym=="ident")
@@ -740,7 +757,7 @@ static int parser_factor()//取得因此放到栈上
 		operand=symbtable_check(lex_token);
 		if(operand==NULL)
 		{
-			global_error(21,lex_token);
+			global_error("legal ident",lex_token);
 			return 0;
 		}
 		if(operand->kind=="array")
@@ -750,17 +767,27 @@ static int parser_factor()//取得因此放到栈上
 			lex_getsym();
 			if(lex_sym!="[")
 			{
-				global_error(12,"array");
+				global_error("[",lex_sym);
 				return 0;
 			}
 			lex_getsym();
 			if(!parser_expression())
-				return 0;
-			src2=operand_stack.top();
-			operand_stack.pop();
+			{
+				string testset[]={"","]"};
+				parser_test(testset,2);
+				if(lex_sym=="")
+				{
+					global_error("]","nothing");
+					return 0;
+				}
+			}
+			else{
+				src2=operand_stack.top();
+				operand_stack.pop();
+			}
 			if(lex_sym!="]")
 			{
-				global_error(13,"array");
+				global_error("]",lex_sym);
 				return 0;
 			}
 			global_new_quadruple("larray",operand,src2,ans);
@@ -774,7 +801,7 @@ static int parser_factor()//取得因此放到栈上
 			lex_getsym();
 			if(lex_sym=="("&&!operand->size)
 			{
-				global_error(30,operand->name);
+				global_error("no parameter",lex_sym);
 				return 0;
 			}
 			if(!operand->size)
@@ -788,6 +815,11 @@ static int parser_factor()//取得因此放到栈上
 			global_new_quadruple("assign",operand,NULL,ans);
 			operand_stack.push(ans);
 		}
+		else if(operand->kind=="procedure")
+		{
+			global_error("factor","procedure "+operand->name);
+			return 0;
+		}
 		else
 		{
 			operand_stack.push(operand);//获得操作数
@@ -798,10 +830,18 @@ static int parser_factor()//取得因此放到栈上
 	{
 		lex_getsym();
 		if(!parser_expression())
-			return 0;
+		{
+			string testset[]={"",")"};
+			parser_test(testset,2);
+			if(lex_sym=="")
+			{
+				global_error(")","nothing");
+				return 0;
+			}
+		}
 		if(lex_sym!=")")
 		{
-			global_error(20,"");
+			global_error(")",lex_sym);
 			return 0;
 		}
 		lex_getsym();
@@ -820,16 +860,17 @@ static int parser_factor()//取得因此放到栈上
 	}
 	else
 	{
-		global_error(22,lex_sym);
+		global_error("legal factor",lex_sym);
 		return 0;
 	}
+	cout << "This is factor" << endl;
 	return 1;
 }
 static int if_ralation_opr(string a)
 {
 	if(a==":=")
 	{
-		global_error(7,"");
+		global_error("=",a);
 		return 1;
 	}
 	return a=="="||
@@ -841,22 +882,22 @@ static int if_ralation_opr(string a)
 static int parser_statement(symbItem *forbid)
 {
 	symbItem *tmp;
-	if(lex_sym=="ident")//
+	if(lex_sym=="ident")
 	{
 		tmp=symbtable_check(lex_token);
-		if(tmp==NULL)//他么还没定义就敢用
+		if(tmp==NULL)
 		{
-			global_error(21,lex_token);
+			global_error("legal ident",lex_token);
 			return 0;
 		}
 		if(tmp==forbid)//该标识符不可以被赋值
 		{
-			global_error(37,"");
+			global_error("this ident\""+tmp->name+"\"can not be changed.");
 			return 0;	
 		}
 		if(tmp->kind=="const")
 		{
-			global_error(25,"");
+			global_error(tmp->name+" can not be changed.");
 			return 0;
 		}
 		else if(tmp->kind=="var"||tmp->kind=="parameter")
@@ -865,50 +906,61 @@ static int parser_statement(symbItem *forbid)
 			if(lex_sym==":="||lex_sym=="=")
 			{
 				if(lex_sym=="=")
-					global_error(27,"");
+					global_error(":=","=");
 			}
 			else
 			{
-				global_error(36,"");
+				global_error(":=",lex_sym);
 				return 0;
 			}
 			lex_getsym();
-			//static stack<symbItem*> operand_stack;
 			if(!parser_expression())
 			{
-				return 0;//你特么语句久错了还好意思往下作。。。
+				return 0;
 			}
 			symbItem *expre=operand_stack.top();
 			operand_stack.pop();
 			global_new_quadruple("assign",expre,NULL,tmp);
-		}//读字符的工作在分支内完成。
+		}
 		else if(tmp->kind=="array")
 		{//tmp [src1]
+			symbItem *src2;
 			lex_getsym();
 			if(lex_sym!="[")
 			{
-				global_error(12,"");
+				global_error("[",lex_sym);
 				return 0;
 			}
 			lex_getsym();
-			if(!parser_expression())//表达式的结果是可能是一个变量，你不可能知道数组越界否。
-				return 0;
-            symbItem *src2=operand_stack.top();
-            operand_stack.pop();
+			if(!parser_expression())
+			{
+				string testset[]={"","]",":="};
+				parser_test(testset,3);
+				if(lex_sym=="")
+				{
+					global_error("]","nothing");
+					return 0;
+				}
+			}
+			else
+			{
+				src2=operand_stack.top();
+				operand_stack.pop();
+			}
 			if(lex_sym!="]")
 			{
-                global_error(13,"");
+                global_error("]",lex_sym);
                 return 0;
 			}
 			lex_getsym();
 			if(lex_sym==":="||lex_sym=="=")
             {
                 if(lex_sym=="=")
-                    global_error(27,"");
+                    global_error(":=",lex_sym);
             }
             else
             {
-                global_error(36,"");
+                global_error(":=",lex_sym);
                 return 0;
             }
             lex_getsym();
@@ -922,17 +974,17 @@ static int parser_statement(symbItem *forbid)
         {//函数标识符只能是本层函数或者他的父层函数
 			if(!symbtable_if_can_change_func(tmp->name))
 			{
-				global_error(38,"");
+				global_error("function \""+tmp->name+"\" can not be changed in this scope.");
 				return 0;
 			}
 			lex_getsym();
 			if(lex_sym!="="&&lex_sym!=":=")
 			{
-				global_error(36,"");
+				global_error(":=",lex_sym);
 				return 0;
 			}
 			if(lex_sym=="=")
-				global_error(7,"");
+				global_error(":=",lex_sym);
 			lex_getsym();
 			if(!parser_expression())
 				return 0;
@@ -947,7 +999,7 @@ static int parser_statement(symbItem *forbid)
 				lex_getsym();
 				if(lex_sym=="(")
 				{
-					global_error(30,tmp->name);
+					global_error("no parameter",lex_sym);
 					return 0;
 				}
 			}
@@ -961,7 +1013,7 @@ static int parser_statement(symbItem *forbid)
         }
         else
         {
-            global_error(0,"我擦，还能是什么东西");
+			global_error("no possible.");
             return 0;
         }
 	}
@@ -972,18 +1024,30 @@ static int parser_statement(symbItem *forbid)
 		lable1=parser_create_new_lable();
         lex_getsym();
         if(!parser_condition(&src1,&src2,oprname))
-            return 0;
-		oprname=global_anti_ralation[oprname];
-		
-		global_new_quadruple(oprname,src1,src2,lable1);
-
+		{   
+			string testset[]={"","then","else"};
+			parser_test(testset,3);
+			if(lex_sym=="")
+			{
+				global_error("then","nothing");
+				return 0;
+			}
+		}
+		else
+		{
+			oprname=global_anti_ralation[oprname];
+			global_new_quadruple(oprname,src1,src2,lable1);
+		}
 		if(lex_sym!="then")
 		{
-			global_error(24,"");//容忍缺then的行为
+			global_error("then",lex_sym);//容忍缺then的行为
 		}
-		lex_getsym();
+		else
+			lex_getsym();
 		if(!parser_statement(NULL))
-			return 0;
+		{
+			return 0;//????
+		}
 		if(lex_sym!="else")
 		{
 			global_new_quadruple("lab",lable1,NULL,NULL);
@@ -1013,10 +1077,18 @@ static int parser_statement(symbItem *forbid)
 		global_new_quadruple("lab",lable1,NULL,NULL);
 		lex_getsym();
 		if(!parser_statement(NULL))
-			return 0;
+		{
+			string testset[]={"","while"};
+			parser_test(testset,2);
+			if(lex_sym=="")
+			{
+				global_error("while","nothing");
+				return 0;
+			}
+		}
 		if(lex_sym!="while")
 		{
-			global_error(29,"");
+			global_error("while",lex_sym);
 			return 0;
 		}
 		lex_getsym();
@@ -1031,10 +1103,17 @@ static int parser_statement(symbItem *forbid)
 		lex_getsym();
 		if(lex_sym!="(")
 		{
-			global_error(19,"");
-			return 0;
+			global_error("(",lex_sym);
+			string testset2[]={"",")"};
+			parser_test(testset2,2);
+			if(lex_sym=="")
+			{
+				global_error(")","nothing");
+				return 0;
+			}
 		}
-		lex_getsym();
+		else
+			lex_getsym();
 		if(lex_sym=="string")
 		{
 			symbItem *item=new symbItem();
@@ -1054,13 +1133,13 @@ static int parser_statement(symbItem *forbid)
 					parser_test(testset,2);
 					if(lex_sym=="")
 					{
-						global_error(20,"");
+						global_error(")","nothing");
 						return 0;
 					}
 				}
 				else
 				{
-					global_new_quadruple("writed",operand_stack.top(),NULL,NULL);
+					global_new_quadruple("writee",operand_stack.top(),NULL,NULL);
 					operand_stack.pop();
 				}
 
@@ -1074,7 +1153,7 @@ static int parser_statement(symbItem *forbid)
 				parser_test(testset,2);
 				if(lex_sym=="")
 				{
-					global_error(20,"");
+					global_error(")","nothing");
 					return 0;
 				}
 			}
@@ -1087,7 +1166,7 @@ static int parser_statement(symbItem *forbid)
 		}
 		if(lex_sym!=")")
 		{
-			global_error(20,"");
+			global_error(")",lex_sym);
 			return 0;
 		}
 		lex_getsym();
@@ -1098,14 +1177,14 @@ static int parser_statement(symbItem *forbid)
 		int flag=0;
 		if(lex_sym!="(")
 		{
-			global_error(19,"");
+			global_error("(",lex_sym);
 			return 0;
 		}
 		do{
 			lex_getsym();
 			if(lex_sym!="ident")
 			{
-				global_error(17,"");
+				global_error("ident",lex_sym);
 				flag=1;
 			}
 			else//"ident"
@@ -1113,24 +1192,24 @@ static int parser_statement(symbItem *forbid)
 				symbItem *ans=symbtable_check(lex_token);
 				if(ans==NULL)
 				{
-					global_error(21,"");
+					global_error(lex_token+" is not declared in this scope.");
 					flag=1;
 				}
 				else
 				{
 					if(ans->kind=="const")
 					{
-						global_error(25,"");
+						global_error("const \""+ans->name+"\" can not be changed");
 						flag=1;
 					}
 					else if(ans->kind=="procedure")
 					{
-						global_error(39,"");
+						global_error("procedure \""+ans->name+"\" can not be changed");
 						flag=1;
 					}
 					else if(ans->kind=="function"&&!symbtable_if_can_change_func(ans->name))
 					{
-							global_error(38,"");
+							global_error("function \""+ans->name+"\" can not be changed in this scope.");
 							flag=1;
 					}
 					else
@@ -1145,7 +1224,7 @@ static int parser_statement(symbItem *forbid)
 				parser_test(testset,3);
 				if(lex_sym=="")
 				{
-					global_error(20,"");
+					global_error(")",lex_sym);
 					return 0;
 				}
 			}
@@ -1154,7 +1233,7 @@ static int parser_statement(symbItem *forbid)
 		}while(lex_sym==",");
 		if(lex_sym!=")")
 		{
-			global_error(20,"");
+			global_error(")",lex_sym);
 			return 0;
 		}
 		lex_getsym();
@@ -1166,40 +1245,62 @@ static int parser_statement(symbItem *forbid)
 		lex_getsym();
 		if(lex_sym!="ident")
 		{
-			global_error(17,"in for branch");
+			global_error("ident",lex_sym);
 			return 0;
 		}
 		tmp=symbtable_check(lex_token);
+		int flag=0;
 		if(tmp->kind=="const")
 		{
-			global_error(25,"in for branch");
-			return 0;
+			global_error("const \""+tmp->name+"\" can not be changed.");
+			flag=1;
 		}
 		else if(tmp->kind=="procedure")
 		{
-			global_error(39,"");
-			return 0;
+			global_error("procedure \""+tmp->name+"\" can not be changed.");
+			flag=1;
 		}
 		else
 		{
 			if(!parser_statement(NULL))
-				return 0;//生成首次赋值语句。
+				flag=1;//生成首次赋值语句。
+		}
+		if(flag)
+		{
+			string testset[]={"","to","downto"};
+			parser_test(testset,3);
+			if(lex_sym=="")
+			{
+				global_error("downto or to","nothing");
+				return 0;
+			}
 		}
 		if(lex_sym!="downto"&&lex_sym!="to")
 		{
-			global_error(33,"");
+			global_error("downto or to",lex_sym);
 			return 0;
 		}
 		else
 			downto=lex_sym=="downto";
 		lex_getsym();
 		if(!parser_expression())
-			return 0;
-		target=operand_stack.top();
-		operand_stack.pop();
+		{
+			string testset[]={"","do"};
+			parser_test(testset,2);
+			if(lex_sym=="")
+			{
+				global_error("do","nothing");
+				return 0;
+			}
+		}
+		else
+		{
+			target=operand_stack.top();
+			operand_stack.pop();
+		}
 		if(lex_sym!="do")
 		{
-			global_error(34,"");
+			global_error("do",lex_sym);
 		//	return 0;
 		}
 		lex_getsym();
@@ -1219,27 +1320,39 @@ static int parser_statement(symbItem *forbid)
 	{
 		//空语句怎么处理，那就不处理好了?
 	}
+	cout << "This is statement " << endl;
 	return 1;
 }
 static int parser_condition(symbItem **src1,symbItem **src2,string &oprname)//传进lable1
 {
 	if(!parser_expression())
-		return 0;
-	*src1=operand_stack.top();
-	operand_stack.pop();
+	{
+		string testset[]={"","<","<=",">",">=","=","<>"};
+		parser_test(testset,7);
+		if(lex_sym=="")
+		{
+			global_error("relational operators","nothing");
+			return 0;
+		}
+	}
+	else
+	{	
+		*src1=operand_stack.top();
+		operand_stack.pop();
+	}
 
 	oprname=lex_sym;
 	if(!if_ralation_opr(oprname))
 	{
-		global_error(28,"");
+		global_error("relational operators","nothing");
 		return 0;
 	}
-	
 	lex_getsym();
 	if(!parser_expression())
 		return 0;
 	*src2=operand_stack.top();
 	operand_stack.pop();
+	cout << "This is condition"<< endl;
 	return 1;
 }
 //Require: item is func or proc
@@ -1251,29 +1364,30 @@ static int parser_realparameterlist(symbItem *func_proc)
 	symbItem *src;
 	if(lex_sym!="(")
 	{
-		global_error(19,func_proc->name);
+		global_error("(",lex_sym);
 		return 0;
 	}
-	lex_getsym();
-	if(!parser_expression())
-	{
-		return 0;
-	}
-	para_queue.push(operand_stack.top());
-	operand_stack.pop();
-	while(lex_sym==",")
-	{
+	do{
 		lex_getsym();
 		if(!parser_expression())
 		{
-			return 0;
+			string testset[]={"",",",")"};
+			parser_test(testset,3);
+			if(lex_sym=="")
+			{
+				global_error(")","nothing");
+				return 0;
+			}
 		}
-		para_queue.push(operand_stack.top());
-		operand_stack.pop();
-	}
+		else
+		{	
+			para_queue.push(operand_stack.top());
+			operand_stack.pop();
+		}
+	}while(lex_sym==",");
 	if(func_proc->size!=para_queue.size())
 	{
-		global_error(30,func_proc->name);
+		global_error("wrong num of parametes in \""+func_proc->name+"\"call.");
 		return 0;
 	}//good,我是指针我怕谁
 	
@@ -1294,10 +1408,11 @@ static int parser_realparameterlist(symbItem *func_proc)
 	}
 	if(lex_sym!=")")
 	{
-		global_error(20,func_proc->name);
+		global_error(")",lex_sym);
 		return 0;
 	}
 	lex_getsym();
+	cout << "This is real parameter list "<<endl;
 	return 1;
 }
 
