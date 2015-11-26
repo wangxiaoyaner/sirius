@@ -154,7 +154,7 @@ int lex_getsym()//lex_getch first
 				}
 				if(!isalpha(lex_ch)&&!isdigit(lex_ch))
 				{
-					global_error("legal character",""+lex_ch);//非法字符
+					global_error("a~zA_Z0-9",(""+lex_ch));//非法字符
 				}	
 				lex_token+=lex_ch;
 				lex_getch();

@@ -39,7 +39,7 @@ static void parser_test(string a[],int num,int &flag)
 	flag=0;
 	while(!parser_ifintestset(a,num,lex_sym))
 	{
-		lex_getsym();	
+		lex_getsym();
 		if(!flag)
 		{
 			global_error("Illegal parser in procedure");
@@ -75,7 +75,7 @@ static symbItem* parser_create_new_lable()
 	ans->type="lable";
 	ans->link=NULL;
 	global_const_pool.push(ans);
-	return ans;	
+	return ans;
 }
 
 static void parser_create_new_var()
@@ -198,7 +198,6 @@ static int parser_procedure()
 		return 0;
 	global_new_quadruple("ret",NULL,NULL,NULL);
 	symbtable_up_level();
-	cout << "This is procedure"<<endl;
 	return 1;
 }
 static int parser_compoundstatement()//require 读了begin 后面的一个单词
@@ -213,9 +212,22 @@ static int parser_compoundstatement()//require 读了begin 后面的一个单词
 			return 0;
 		}
 	}
-	while(lex_sym==";")
+	while(true)
 	{
-		lex_getsym();
+		if(lex_sym==";")
+			lex_getsym();
+		else
+		{
+			string testset[]={"ident","end","","if","for","do","begin","write","read"};
+			parser_test(testset,9);
+			if(lex_sym=="end")
+				break;
+			else if(lex_sym=="")
+			{
+				global_error("end","nothing");
+				return 0;
+			}
+		}
 		if(!parser_statement(NULL))
 		{
 			parser_test(testset,3);
@@ -232,6 +244,7 @@ static int parser_compoundstatement()//require 读了begin 后面的一个单词
 		return 0;
 	}
 	lex_getsym();
+	return 1;
 }
 static int parser_constdefinition()//常量定义
 {
@@ -292,7 +305,6 @@ static int parser_constdefinition()//常量定义
 		global_error("ident",lex_sym);//常量定义开头是标识符
 		return 0;
 	}
-	cout << "this is const definition" << endl;
 	return 1;
 }
 
@@ -307,7 +319,7 @@ static int parser_constdeclaration()
 		{
 			global_error(";","nothing");
 			return 0;
-		}	
+		}
 	}//读到了合法的后继之后就应该继续往下干。
 	while(lex_sym==",")
 	{
@@ -330,7 +342,6 @@ static int parser_constdeclaration()
 		return 0;
 	}
 	lex_getsym();
-	cout << "This is const declaration" << endl;
 	return 1;
 }
 
@@ -433,7 +444,6 @@ static int parser_vardefinition()
 		global_error("ident",lex_sym);//变量定义开头是标识符
 		return 0;
 	}
-	cout << "This is var definition" << endl;
 	return 1;
 }
 static int parser_vardeclaration()
@@ -453,9 +463,9 @@ static int parser_vardeclaration()
 		{
 			global_error(";","nothing");
 		}
-		lex_getsym();
+		else
+			lex_getsym();
 	}while(lex_sym=="ident");
-	cout << "This is var declaration" << endl;
 	return 1;
 }
 static int parser_functiondeclaration()
@@ -506,9 +516,16 @@ static int parser_functiondeclaration()
 		if(lex_sym!=";")
 		{
 			global_error(";",lex_sym);
-			return 0;
+			string testset[]={"","begin","const","var","begin","function","procedure"};
+			parser_test(testset,6);
+			if(lex_sym=="")
+			{
+				global_error("begin","nothing");
+				return 0;
+			}
 		}
-		lex_getsym();
+		else
+			lex_getsym();
 	}
 	if(!parser_procedure())
 	{
@@ -525,8 +542,8 @@ static int parser_functiondeclaration()
 		global_error(";",lex_sym);
 		return 0;
 	}
+	else
 	lex_getsym();
-	cout << "This is function declaration"<<endl;
 	return 1;
 }
 static int parser_proceduredeclaration()
@@ -560,10 +577,18 @@ static int parser_proceduredeclaration()
 			if(lex_sym!=";")
 			{
 				global_error(";",lex_sym);
-				return 0;
+				string testset[]={"","const","var","begin","function","procedure"};
+				parser_test(testset,6);
+				if(lex_sym=="")
+				{
+					global_error("procedure\""+lex_token+"\" body expected.");
+					return 0;
+				}
 			}
+			else
+				lex_getsym();
 		}
-		lex_getsym();
+		else lex_getsym();
 		start->last_item->size=para_size;
 	}
 	if(!parser_procedure())
@@ -582,7 +607,6 @@ static int parser_proceduredeclaration()
 		return 0;
 	}
 	lex_getsym();
-	cout << "This is procedure declaration" << endl;
 	return 1;
 }
 
@@ -615,7 +639,6 @@ static int parser_formalparalist(int &para_size)
 		}
 		lex_getsym();
 	}
-	cout << "This is formal parameter list"<<endl;
 	return 1;
 }
 
@@ -679,7 +702,6 @@ static int parser_formalparasection(int &para_size)
 			lex_getsym();
 		}
 	}
-	cout << "This is formal parameter section"<<endl;
 	return 1;
 }
 
@@ -710,7 +732,6 @@ static int parser_expression()
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
-	cout << "This is expression" << endl;
 	return 1;
 }
 static int parser_term(int &if_low_zero)
@@ -745,7 +766,6 @@ static int parser_term(int &if_low_zero)
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
-	cout << "This is term" << endl;
 	return 1;
 }
 
@@ -863,7 +883,6 @@ static int parser_factor()
 		global_error("legal factor",lex_sym);
 		return 0;
 	}
-	cout << "This is factor" << endl;
 	return 1;
 }
 static int if_ralation_opr(string a)
@@ -893,7 +912,7 @@ static int parser_statement(symbItem *forbid)
 		if(tmp==forbid)//该标识符不可以被赋值
 		{
 			global_error("this ident\""+tmp->name+"\"can not be changed.");
-			return 0;	
+			return 0;
 		}
 		if(tmp->kind=="const")
 		{
@@ -990,7 +1009,7 @@ static int parser_statement(symbItem *forbid)
 				return 0;
 			symbItem *src1=operand_stack.top();
 			operand_stack.pop();
-			global_new_quadruple("assign",src1,NULL,tmp);		
+			global_new_quadruple("assign",src1,NULL,tmp);
         }
         else if(tmp->kind=="procedure")//过程调用语句,tmp已经经过差表
         {
@@ -1024,7 +1043,7 @@ static int parser_statement(symbItem *forbid)
 		lable1=parser_create_new_lable();
         lex_getsym();
         if(!parser_condition(&src1,&src2,oprname))
-		{   
+		{
 			string testset[]={"","then","else"};
 			parser_test(testset,3);
 			if(lex_sym=="")
@@ -1068,7 +1087,7 @@ static int parser_statement(symbItem *forbid)
 		lex_getsym();
 		if(!parser_compoundstatement())
 			return 0;
-	}		
+	}
 	else if(lex_sym=="do")
 	{
 		symbItem *lable1=parser_create_new_lable();
@@ -1095,7 +1114,7 @@ static int parser_statement(symbItem *forbid)
 		if(!parser_condition(&src1,&src2,oprname))
 			return 0;
 		oprname=global_ralation[oprname];
-		global_new_quadruple(oprname,src1,src2,lable1);		
+		global_new_quadruple(oprname,src1,src2,lable1);
 	}
 	else if(lex_sym=="write")
 	{
@@ -1146,7 +1165,7 @@ static int parser_statement(symbItem *forbid)
 			}
 
 		}
-		else//表达式 
+		else//表达式
 		{
 			if(!parser_expression())
 			{
@@ -1320,7 +1339,6 @@ static int parser_statement(symbItem *forbid)
 	{
 		//空语句怎么处理，那就不处理好了?
 	}
-	cout << "This is statement " << endl;
 	return 1;
 }
 static int parser_condition(symbItem **src1,symbItem **src2,string &oprname)//传进lable1
@@ -1336,7 +1354,7 @@ static int parser_condition(symbItem **src1,symbItem **src2,string &oprname)//�
 		}
 	}
 	else
-	{	
+	{
 		*src1=operand_stack.top();
 		operand_stack.pop();
 	}
@@ -1352,7 +1370,6 @@ static int parser_condition(symbItem **src1,symbItem **src2,string &oprname)//�
 		return 0;
 	*src2=operand_stack.top();
 	operand_stack.pop();
-	cout << "This is condition"<< endl;
 	return 1;
 }
 //Require: item is func or proc
@@ -1380,17 +1397,17 @@ static int parser_realparameterlist(symbItem *func_proc)
 			}
 		}
 		else
-		{	
+		{
 			para_queue.push(operand_stack.top());
 			operand_stack.pop();
 		}
 	}while(lex_sym==",");
-	if(func_proc->size!=para_queue.size())
+	if((unsigned)func_proc->size!=para_queue.size())
 	{
 		global_error("wrong num of parametes in \""+func_proc->name+"\"call.");
 		return 0;
 	}//good,我是指针我怕谁
-	
+
 	//require: enough para item in the global_table
 	int j=func_proc->size;
 	symbItem *k=func_proc->link;
@@ -1412,7 +1429,6 @@ static int parser_realparameterlist(symbItem *func_proc)
 		return 0;
 	}
 	lex_getsym();
-	cout << "This is real parameter list "<<endl;
 	return 1;
 }
 
