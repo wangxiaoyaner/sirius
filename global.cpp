@@ -41,7 +41,7 @@ void global_new_quadruple(string opr,symbItem *src1,symbItem *src2,symbItem *ans
 		if(ans->kind=="const"||ans->kind=="var")
 			if(ans->level<symbtable_now->level)
 				ans->if_used=1;
-	if(newitem->opr=="lab"&&newitem->src1->name[0]=='_')
+	if(newitem->opr=="func")
 	{
 		quadfunc *newcodes=new quadfunc();
 		newcodes->firstcode=newitem;
@@ -70,7 +70,7 @@ void global_quadruple_display()
 	quadfunc *tmpfunc=quadruple_codes;
 	while(tmpfunc!=NULL)
 	{
-		cout << "函数的名字是："<<tmpfunc->table->name<<" 函数内容如下:"<<endl;
+		cout << "函数的名字是："<<tmpfunc->table->name<<"whh\t"<<tmpfunc->table->level<<" 函数内容如下:"<<endl;
 		quadruple *tmp=tmpfunc->firstcode;
 		while(tmp!=NULL)
 		{

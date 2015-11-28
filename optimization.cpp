@@ -62,10 +62,17 @@ map<int,string>
 牺牲内存了拉。。。
 所以还是要保留Display区。
 
-真不知道你还有自虐倾向，明明可以早睡却还不。
-display区;
 参数区[ebp+8...]
-上层全局寄存器区域[ebp+8+4*N...]
+display 区=level数(ebp+20开始的）
+3
+2
+1
+0
+-------------------------
+esi[+16]
+edi[+12]
+ebx[+8]
+上层全局寄存器区域[ebp+8,ebp+12,ebp+16)
 返回地址[ebp+4]
 saved ebp.
 ret value.[ebp-4]

@@ -55,17 +55,6 @@ static string numtostring(int num)
 	tmp >> res;
 	return res;
 }
-static symbItem* parser_create_new_lable(string name,int level)
-{
-	name="_"+name;
-	symbItem* ans=new symbItem();
-	ans->name=level?name+numtostring(level):"_main";
-	ans->kind="constpool";
-	ans->type="lable";
-	ans->link=NULL;
-	global_const_pool.push(ans);
-	return ans;
-}
 static symbItem* parser_create_new_lable()
 {
 	string name="lab";
@@ -193,8 +182,19 @@ static int parser_procedure()
 		return 0;
 	}
 	lex_getsym();
-	symbItem *func_lab=parser_create_new_lable(symbtable_now->name,symbtable_now->level);
-	global_new_quadruple("lab",func_lab,NULL,NULL);
+	symbItem *func;	
+	if(symbtable_now->father)
+		func=symbtable_now->father->last_item;
+	else
+	{
+		func=new symbItem();
+		func->name="main";
+		func->kind="constpool";
+		func->type="lable";
+		func->link=NULL;
+		global_const_pool.push(func);
+	}
+	global_new_quadruple("func",func,NULL,NULL);
 	if(!parser_compoundstatement())
 		return 0;
 	global_new_quadruple("ret",NULL,NULL,NULL);
