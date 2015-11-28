@@ -36,6 +36,7 @@ typedef struct quadruple{
 typedef struct symbTable{
 	string name;
 	int level;
+	int localsnum;
 	symbItem *first_item;
 	symbItem *last_item;
 	struct symbTable *father;
@@ -90,3 +91,5 @@ extern map<string,string> global_ralation;
 
 void parser_program();
 
+void optimazation_adr_alloc();
+void generate_main();

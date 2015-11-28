@@ -140,7 +140,8 @@ static void symbtable_print_single(symbTable *itable)
 		cout <<  tmp->name << "\t" << tmp->level 
 			<< "\t"<< tmp->kind << "\t"<< tmp->type 
 			<<"\t"<< tmp->size << "\t"<<tmp->para_ifvar
-			<<"\t"<<tmp->value<<"\t"<<tmp->if_used<<endl;
+			<<"\t"<<tmp->value<<"\t"<<tmp->if_used
+			<<"\t"<<tmp->adr<<endl;
 		
 		tmp=tmp->link;
 	}
@@ -149,13 +150,13 @@ static void symbtable_print_single(symbTable *itable)
 
 void symbtable_display()
 {	
-	cout << "name\tlevel\tkind\ttype\tsize\tpara_ifvar\tvalue\tif_used\n";
+	cout << "name\tlevel\tkind\ttype\tsize\tpara_ifvar\tvalue\tif_used\tadr\n";
 
 	for(int i=0;i<90;i++)
-	{
+	{//作为参数并不害怕应为参数区有对应的，var和const会被下一层使用
 		for(int j=0;j<alltable_j[i];j++)
 		{
-			cout << "NAME:"<<alltable[i][j]->name<<endl;
+			cout << "NAME:"<<alltable[i][j]->name<<"\tlocalsnum:"<<alltable[i][j]->localsnum<<endl;
 			symbtable_print_single(alltable[i][j]);
 		}
 	}

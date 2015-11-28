@@ -1,13 +1,43 @@
 #include"global.h"
+//EBX,EDI,ESI 123
+static void sigtable_addr_alloc(quadfunc *target)
+{
+	int local_start=-8,ebxediesi=1;
+	symbTable *tmptable=target->table;
+	tmptable->localsnum=0;
+	symbItem *tmpitem=tmptable->first_item;
+	while(tmpitem!=NULL)
+	{
+		if(!tmpitem->adr&&tmpitem->kind=="var"||tmpitem->kind=="const"||tmpitem->kind=="array")//未分配地址
+		{
+			if(ebxediesi<4&&tmpitem->kind!="array")
+				tmpitem->adr=ebxediesi++;
+			else if(tmpitem->kind=="array")
+			{
+				tmpitem->adr=local_start;
+				local_start-=(4*tmpitem->size);
+				tmptable->localsnum+=tmpitem->size;
+			}
+			else
+			{
+				tmpitem->adr=local_start;
+				local_start-=4;
+				tmptable->localsnum++;//记录在栈上分配变量的地址数。
+			}
+		}
+		tmpitem=tmpitem->link;
+	}
+}
+void optimazation_adr_alloc()
+{
+	quadruple_codes_now=quadruple_codes;
+	while(quadruple_codes_now!=NULL)
+	{
+		sigtable_addr_alloc(quadruple_codes_now);
+		quadruple_codes_now=quadruple_codes_now->link;
+	}
+}
 /*
-传参数问题：
-
-
-
-外层的参数作为全局变量。。
-if_used:
-	
-将整个程序变成一个个过程。
 全局寄存器：ESI,EDI,EBX;
 特殊寄存器：ESP,EBP;
 临时寄存器：EAX，EDX，ECX
@@ -24,9 +54,6 @@ map<int,string>
 对于临时变量，如果在消除了公共子表达式之后还存在的，就给他在栈上分配一块空间，否则久不分配。
 
 对于局部变量并且没有分配寄存器的，就在栈上分配一块空间。
-
-函数四元式容器。`
-
 //////////////////////////////
 保留Display区?
 他可不是自己就能跑上去的。
@@ -45,19 +72,5 @@ ret value.[ebp-4]
 局部变量区域[ebp-8]
 临时变量区域
 本来在全局寄存器不得已到这的局部变量区域
-
-
-
-
-先找出所有能分配全局寄存器的临时变量。
-然后选几个放到
-给所有
-栈向下增长
-
-
-
-
 Saved esp
-
-
 */
