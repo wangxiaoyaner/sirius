@@ -57,8 +57,9 @@ static string numtostring(int num)
 }
 static symbItem* parser_create_new_lable(string name,int level)
 {
+	name="_"+name;
 	symbItem* ans=new symbItem();
-	ans->name=level?name+numtostring(level):"main";
+	ans->name=level?name+numtostring(level):"_main";
 	ans->kind="constpool";
 	ans->type="lable";
 	ans->link=NULL;

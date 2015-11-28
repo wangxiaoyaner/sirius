@@ -17,6 +17,7 @@ typedef struct symbItem{
 	string name;
 	string kind;//var,const,array,procedure,function?
 	string type;//char integer
+	int if_used;
 	int value;//char 类型怎么办，存ASCII？
 	int level;
 	int adr;
@@ -31,6 +32,7 @@ typedef struct quadruple{
 	symbItem *ans;
 	struct quadruple *link;
 }quadruple;
+
 typedef struct symbTable{
 	string name;
 	int level;
@@ -42,6 +44,16 @@ typedef struct symbTable{
 	struct symbTable *brother;
 }symbTable;
 
+typedef struct quadfunc{
+	quadruple *firstcode;
+	quadruple *lastcode;
+	symbTable *table;
+	struct quadfunc *link;
+}quadfunc;
+
+
+extern quadfunc* quadruple_codes;
+extern quadfunc* quadruple_codes_now;
 extern symbTable *symbtable_table;
 extern symbTable *symbtable_now;
 symbItem* symbtable_check(string name);
@@ -58,14 +70,11 @@ extern int global_error_num;
 void global_error(string right,string wrong);
 void global_error(string words);
 void global_init();
-extern quadruple *quadruple_first;
-extern quadruple *quadruple_last;
 
 void global_new_quadruple(string opr,symbItem *src1,symbItem *src2,symbItem *ans);
 void global_quadruple_display();
 extern const string lex_words[];//直接判断，类型以lex_token命名。
 
-//parser_create_new_lable();numtostring;void parser_create_new_var
 
 extern FILE *sourcefile,*out;
 extern string lex_token,lex_sym;

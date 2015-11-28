@@ -116,6 +116,7 @@ int symbtable_enter(string name,string kind,string type,int value,int para_ifvar
 	new_item->kind=kind;
 	new_item->type=type;
 	new_item->value=value;
+	new_item->if_used=0;
 	new_item->level=symbtable_level;//别丢了呀
 	new_item->para_ifvar=para_ifvar;
 	new_item->link=NULL;
@@ -138,7 +139,8 @@ static void symbtable_print_single(symbTable *itable)
 	{
 		cout <<  tmp->name << "\t" << tmp->level 
 			<< "\t"<< tmp->kind << "\t"<< tmp->type 
-			<<"\t"<< tmp->size << "\t"<<tmp->para_ifvar<<"\t"<<tmp->value<<endl;
+			<<"\t"<< tmp->size << "\t"<<tmp->para_ifvar
+			<<"\t"<<tmp->value<<"\t"<<tmp->if_used<<endl;
 		
 		tmp=tmp->link;
 	}
@@ -147,7 +149,7 @@ static void symbtable_print_single(symbTable *itable)
 
 void symbtable_display()
 {	
-	cout << "name\tlevel\tkind\ttype\tsize\tpara_ifvar\tvalue\n";
+	cout << "name\tlevel\tkind\ttype\tsize\tpara_ifvar\tvalue\tif_used\n";
 
 	for(int i=0;i<90;i++)
 	{
