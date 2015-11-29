@@ -47,7 +47,7 @@ static void parser_test(string a[],int num,int &flag)
 		}
 	}
 }
-static string numtostring(int num)
+string numtostring(int num)
 {
 	stringstream tmp;
 	string res;
@@ -67,7 +67,17 @@ static symbItem* parser_create_new_lable()
 	global_const_pool.push(ans);
 	return ans;
 }
-
+static symbItem* parser_create_new_const(symbItem *src)
+{
+	symbItem *ans=new symbItem();
+	ans->name=numtostring(src->value);
+	ans->kind="constpool";
+	ans->value=src->value;
+	ans->type=src->type;
+	ans->link=NULL;
+	global_const_pool.push(ans);
+	return ans;
+}
 static void parser_create_new_var()
 {
 	string name="_";
@@ -720,14 +730,18 @@ static int parser_expression()
 		return 0;
 	while(lex_sym=="-"||lex_sym=="+")
 	{
-		opr=lex_sym;
+		opr=lex_sym=="+"?"add":"sub";
 		lex_getsym();
 		if(!parser_term(if_low_zero))
 			return 0;
 		src2=operand_stack.top();
 		operand_stack.pop();
+		if(src2->kind=="const")
+			src2=parser_create_new_const(src2);
 		src1=operand_stack.top();
 		operand_stack.pop();
+		if(src1->kind=="const")
+			src1=parser_create_new_const(src1);
 		parser_create_new_var();
 		ans=symbtable_now->last_item;
 		global_new_quadruple(opr,src1,src2,ans);
@@ -747,6 +761,8 @@ static int parser_term(int &if_low_zero)
 		ans=symbtable_now->last_item;
 		src1=operand_stack.top();
 		operand_stack.pop();
+		if(src1->kind=="const")
+			src1=parser_create_new_const(src1);
 		global_new_quadruple("assign",src1,NULL,ans);
 		global_new_quadruple("neg",NULL,NULL,ans);
 		operand_stack.push(ans);
@@ -754,7 +770,7 @@ static int parser_term(int &if_low_zero)
 	}
 	while(lex_sym=="*"||lex_sym=="/")
 	{
-		opr=lex_sym;
+		opr=lex_sym=="*"?"imul":"idiv";
 		lex_getsym();
 		if(!parser_factor())
 			return 0;
@@ -762,8 +778,12 @@ static int parser_term(int &if_low_zero)
 		ans=symbtable_now->last_item;
 		src2=operand_stack.top();
 		operand_stack.pop();
+		if(src2->kind=="const")
+			src2=parser_create_new_const(src2);
 		src1=operand_stack.top();
 		operand_stack.pop();
+		if(src1->kind=="const")
+			src1=parser_create_new_const(src1);
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
@@ -805,6 +825,8 @@ static int parser_factor()
 			else{
 				src2=operand_stack.top();
 				operand_stack.pop();
+				if(src2->kind=="const")
+					src2=parser_create_new_const(src2);
 			}
 			if(lex_sym!="]")
 			{
@@ -940,6 +962,8 @@ static int parser_statement(symbItem *forbid)
 			}
 			symbItem *expre=operand_stack.top();
 			operand_stack.pop();
+			if(expre->kind=="const")
+				expre=parser_create_new_const(expre);
 			global_new_quadruple("assign",expre,NULL,tmp);
 		}
 		else if(tmp->kind=="array")
@@ -966,6 +990,8 @@ static int parser_statement(symbItem *forbid)
 			{
 				src2=operand_stack.top();
 				operand_stack.pop();
+				if(src2->kind=="const")
+					src2=parser_create_new_const(src2);
 			}
 			if(lex_sym!="]")
 			{
@@ -988,6 +1014,8 @@ static int parser_statement(symbItem *forbid)
                 return 0;
             symbItem *ans=operand_stack.top();
             operand_stack.pop();
+			if(ans->kind=="const")
+				ans=parser_create_new_const(ans);
             global_new_quadruple("sarray",tmp,src2,ans);//tmp[src2]=ans
 		}
 		else if(tmp->kind=="function")//函数标示符=表达式
@@ -1010,6 +1038,8 @@ static int parser_statement(symbItem *forbid)
 				return 0;
 			symbItem *src1=operand_stack.top();
 			operand_stack.pop();
+			if(src1->kind=="const")
+				src1=parser_create_new_const(src1);
 			global_new_quadruple("assign",src1,NULL,tmp);
         }
         else if(tmp->kind=="procedure")//过程调用语句,tmp已经经过差表
@@ -1056,6 +1086,10 @@ static int parser_statement(symbItem *forbid)
 		else
 		{
 			oprname=global_anti_ralation[oprname];
+			if(src1->kind=="const")
+				src1=parser_create_new_const(src1);
+			if(src2->kind=="const")
+				src2=parser_create_new_const(src2);
 			global_new_quadruple(oprname,src1,src2,lable1);
 		}
 		if(lex_sym!="then")
@@ -1115,6 +1149,10 @@ static int parser_statement(symbItem *forbid)
 		if(!parser_condition(&src1,&src2,oprname))
 			return 0;
 		oprname=global_ralation[oprname];
+		if(src1->kind=="const")
+			src1=parser_create_new_const(src1);	
+		if(src2->kind=="const")
+			src2=parser_create_new_const(src2);
 		global_new_quadruple(oprname,src1,src2,lable1);
 	}
 	else if(lex_sym=="write")
@@ -1159,7 +1197,10 @@ static int parser_statement(symbItem *forbid)
 				}
 				else
 				{
-					global_new_quadruple("writee",operand_stack.top(),NULL,NULL);
+					symbItem *src=operand_stack.top();
+					if(src->kind=="const")
+						src=parser_create_new_const(src);
+					global_new_quadruple("writee",src,NULL,NULL);
 					operand_stack.pop();
 				}
 
@@ -1179,7 +1220,10 @@ static int parser_statement(symbItem *forbid)
 			}
 			else
 			{
-				global_new_quadruple("writee",operand_stack.top(),NULL,NULL);
+				symbItem *src=operand_stack.top();
+				if(src->kind=="const")
+					src=parser_create_new_const(src);
+				global_new_quadruple("writee",src,NULL,NULL);
 				operand_stack.pop();
 			}
 
@@ -1317,6 +1361,8 @@ static int parser_statement(symbItem *forbid)
 		{
 			target=operand_stack.top();
 			operand_stack.pop();
+			if(target->kind=="const")
+				target=parser_create_new_const(target);
 		}
 		if(lex_sym!="do")
 		{
@@ -1418,10 +1464,14 @@ static int parser_realparameterlist(symbItem *func_proc)
 	{
 		src=para_queue.front();
 		para_queue.pop();
-		if(k->para_ifvar)//可能撤表了也可能没撤表
-			global_new_quadruple("rpara",src,NULL,NULL);
+		if(k->para_ifvar&&src->kind!="const")//可能撤表了也可能没撤表
+			global_new_quadruple("rpara",src,func_proc,NULL);
 		else
-			global_new_quadruple("fpara",src,NULL,NULL);
+		{
+			if(src->kind=="const")
+				src=parser_create_new_const(src);
+			global_new_quadruple("fpara",src,func_proc,NULL);
+		}
 		k=k->link;//Require k<>NULL;
 	}
 	if(lex_sym!=")")

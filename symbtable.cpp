@@ -42,8 +42,14 @@ void symbtable_up_level()
 //参数交换过程
 	symbTable *father=symbtable_now->father;
 	parafirst=symbtable_now->first_item;
+	int mark=1,mysize;
 	if(parafirst!=NULL && parafirst->kind=="parameter")
-	{	
+	{
+		if(mark)
+		{
+			mysize=father->last_item->size;		
+			mark=0;
+		}
 		father->last_item->link=parafirst;
 		while(father->last_item->link!=NULL && father->last_item->link->kind=="parameter")
 		{
@@ -51,6 +57,7 @@ void symbtable_up_level()
 			father->last_item=father->last_item->link;
 			father->last_item->level--;//参数建一层
 			father->last_item->adr=++i;
+			father->last_item->size=mysize;
 		}
 		father->last_item->link=NULL;	
 	}
@@ -114,6 +121,7 @@ int symbtable_enter(string name,string kind,string type,int value,int para_ifvar
 	symbItem *new_item=new symbItem();
 	new_item->name=name;
 	new_item->kind=kind;
+	new_item->size=0;
 	new_item->type=type;
 	new_item->value=value;
 	new_item->if_used=0;

@@ -88,7 +88,7 @@ int lex_getsym();
 
 extern map<string,string> global_anti_ralation;
 extern map<string,string> global_ralation;
-
+string numtostring(int num);
 void parser_program();
 
 void optimazation_adr_alloc();
