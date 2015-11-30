@@ -26,16 +26,26 @@ static void handle_src1(symbItem *src1,string &num1)//将操作数的值所在�
 	num1="eax";
 	if(src1->kind=="constpool")
 	{
-		fprintf(x86codes,"mov eax,%d\n",src1->value);
+		fprintf(x86codes,"mov eax,%s\n",src1->name.data());
 	}
 	else if(src1->level==level)
 	{
 		if(src1->kind=="parameter")
 		{
-			if(src1->para_ifvar)
-				fprintf(x86codes,"mov eax,[ebp+%d]\nmov eax,[eax]\n",16+4*(level+src1->adr));
+			if(src1->type=="integer")
+			{
+				if(src1->para_ifvar)
+					fprintf(x86codes,"mov eax,[ebp+%d]\nmov eax,[eax]\n",16+4*(level+src1->adr));
+				else
+					fprintf(x86codes,"mov eax,[ebp+%d]\n",16+4*(level+src1->adr));
+			}
 			else
-				fprintf(x86codes,"mov eax,[ebp+%d]\n",16+4*(level+src1->adr));
+			{
+				if(src1->para_ifvar)
+					fprintf(x86codes,"mov eax,[ebp+%d]\nmovzx eax,byte [eax]\n",16+4*(level+src1->adr));
+				else
+					fprintf(x86codes,"movzx eax,byte [ebp+%d]\n",16+4*(level+src1->adr));
+			}
 		}
 		else if(src1->adr%4)
 		{
@@ -43,40 +53,70 @@ static void handle_src1(symbItem *src1,string &num1)//将操作数的值所在�
 		}
 		else
 		{
-			string tmp=src1->adr>0?"+":"";
-			tmp+=numtostring(src1->adr);
-			fprintf(x86codes,"mov eax,[ebp%s]\n",tmp.data());
+			if(src1->type=="integer")
+				fprintf(x86codes,"mov eax,[ebp-%d]\n",-src1->adr);
+			else 
+				fprintf(x86codes,"movzx eax,byte [ebp-%d]\n",-src1->adr);
 		}
 	}
 	else
 	{
 		if(src1->kind=="parameter")//不是这一层的参数
 		{
-			if(src1->para_ifvar)
-			{
-				fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmov eax,[eax]\nmov eax,[eax]\n",20+src1->level*4,16+(src1->level+src1->adr)*4);
+			if(src1->type=="integer"){
+				if(src1->para_ifvar)
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmov eax,[eax]\nmov eax,[eax]\n",20+src1->level*4,16+(src1->level+src1->adr)*4);
+				}
+				else
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmov eax,[eax]\n",20+src1->level*4,16+(src1->level+src1->adr)*4);
+				}
 			}
 			else
 			{
-				fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmov eax,[eax]\n",20+src1->level*4,16+(src1->level+src1->adr)*4);
+				if(src1->para_ifvar)
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmov eax,[eax]\nmovzx eax,byte [eax]\n",20+src1->level*4,16+(src1->level+src1->adr)*4);
+				}
+				else
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmovzx eax,byte [eax]\n",20+src1->level*4,16+(src1->level+src1->adr)*4);
+				}
+
 			}
 		}
 		else if(src1->adr%4)
 		{//找到所在层的调用层的ebp，
-			if(src1->level+1==level)//仅差一层
+			if(src1->type=="integer")
 			{
-				fprintf(x86codes,"mov eax,[ebp+%d]\n",4+4*src1->adr);
+				if(src1->level+1==level)//仅差一层
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\n",4+4*src1->adr);
+				}
+				else
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmov eax,[eax]\n",20+(src1->level+1)*4,4+src1->adr*4);
+				}
 			}
-			else
+			else 
 			{
-				fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmov eax,[eax]\n",20+(src1->level+1)*4,4+src1->adr*4);
+				if(src1->level+1==level)//仅差一层
+				{
+					fprintf(x86codes,"movzx eax,byte [ebp+%d]\n",4+4*src1->adr);
+				}
+				else
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\nadd eax,%d\nmovzx eax,byte [eax]\n",20+(src1->level+1)*4,4+src1->adr*4);
+				}
 			}
 		}
 		else
 		{
-			string tmp=src1->adr>0?"add":"sub";
-			int tmpn=src1->adr>0?src1->adr:-src1->adr;
-			fprintf(x86codes,"mov eax,[ebp+%d]\n%s eax,%d\nmov eax,[eax]\n",20+src1->level*4,tmp.data(),tmpn);
+			if(src1->type=="integer")
+				fprintf(x86codes,"mov eax,[ebp+%d]\nsub eax,%d\nmov eax,[eax]\n",20+src1->level*4,-src1->adr);
+			else
+				fprintf(x86codes,"mov eax,[ebp+%d]\nsub eax,%d\nmovzx eax,byte[eax]\n",20+src1->level*4,-src1->adr);
 		}
 	}	
 }
@@ -84,7 +124,7 @@ static void handle_src2(symbItem *src2,string &num2)
 {
 	if(src2->kind=="constpool")
 	{
-		num2=numtostring(src2->value);
+		num2=src2->name;
 	}
 	else if(src2->level==level)
 	{
@@ -93,11 +133,23 @@ static void handle_src2(symbItem *src2,string &num2)
 			if(src2->para_ifvar)
 			{
 				fprintf(x86codes,"mov ecx,[ebp+%d]\n",16+4*(level+src2->adr));
-				num2="[ecx]";
+				if(src2->type=="integer")
+					num2="[ecx]";
+				else
+				{
+					fprintf(x86codes,"movzx ecx byte[ecx]\n");
+					num2="ecx";
+				}
 			}
 			else
 			{
-				num2="[ebp+"+numtostring(16+4*(level+src2->adr))+"]";
+				if(src2->type=="integer")
+					num2="[ebp+"+numtostring(16+4*(level+src2->adr))+"]";
+				else
+				{
+					fprintf(x86codes,"movzx ecx,byte [ebp+%d]\n",(16+4*(level+src2->adr)));
+					num2="ecx";
+				}
 			}
 		}
 		else if(src2->adr%4)
@@ -106,24 +158,44 @@ static void handle_src2(symbItem *src2,string &num2)
 		}
 		else
 		{
-			string tmp=src2->adr>0?"+":"";
-			tmp+=numtostring(src2->adr);
-			num2="[ebp"+tmp+"]";
+			if(src2->type=="integer")
+			{
+				string tmp=src2->adr>0?"+":"";
+				tmp+=numtostring(src2->adr);
+				num2="[ebp"+tmp+"]";
+			}
+			else
+			{
+				fprintf(x86codes,"movzx ecx,byte [ebp-%d]\n",-src2->adr);
+				num2="ecx";
+			}
 		}
 	}
 	else
 	{
 		if(src2->kind=="parameter")//不是这一层的参数
 		{
-
 			num2="[ecx]";
 			if(src2->para_ifvar)
 			{
-				fprintf(x86codes,"mov ecx,[ebp+%d]\nadd ecx,%d\nmov ecx,[ecx]\n",20+src2->level*4,16+(src2->level+src2->adr)*4);
+				if(src2->type=="integer")
+					fprintf(x86codes,"mov ecx,[ebp+%d]\nadd ecx,%d\nmov ecx,[ecx]\n",20+src2->level*4,16+(src2->level+src2->adr)*4);
+				else
+				{
+					fprintf(x86codes,"mov ecx,[ebp+%d]\nadd ecx,%d\nmov ecx,[ecx]\nmovzx ecx,byte [ecx]\n",20+src2->level*4,16+(src2->level+src2->adr)*4);
+					num2="ecx";
+				}
 			}
 			else
 			{
-				fprintf(x86codes,"mov ecx,[ebp+%d]\nadd ecx,%d\n",20+src2->level*4,16+(src2->level+src2->adr)*4);
+				if(src2->type=="integer")
+					fprintf(x86codes,"mov ecx,[ebp+%d]\nadd ecx,%d\n",20+src2->level*4,16+(src2->level+src2->adr)*4);
+				else
+				{
+					num2="ecx";
+					fprintf(x86codes,"mov ecx,[ebp+%d]\nadd ecx,%d\nmovzx ecx,byte [ecx]\n",20+src2->level*4,16+(src2->level+src2->adr)*4);
+
+				}
 			}
 		}
 		else if(src2->adr%4)
@@ -131,11 +203,21 @@ static void handle_src2(symbItem *src2,string &num2)
 			if(src2->level+1==level)//仅差一层
 			{
 				num2="[ebp+"+numtostring(4+4*src2->adr)+"]";
+				if(src2->type=="char")
+				{
+					fprintf(x86codes,"movzx ecx,byte%s\n",num2.data());
+					num2="ecx";
+				}
 			}
 			else
 			{
 				fprintf(x86codes,"mov ecx,[ebp+%d]\nadd ecx,%d\n",20+(src2->level+1)*4,4+src2->adr*4);
 				num2="[ecx]";
+				if(src2->type=="char")
+				{
+					num2="ecx";
+					fprintf(x86codes,"movzx ecx,byte [ecx]\n");
+				}
 			}
 		}
 		else
@@ -144,6 +226,11 @@ static void handle_src2(symbItem *src2,string &num2)
 			string tmp=src2->adr>0?"add":"sub";
 			int tmpn=src2->adr>0?src2->adr:-src2->adr;
 			fprintf(x86codes,"mov ecx,[ebp+%d]\n%s ecx,%d\n",20+src2->level*4,tmp.data(),tmpn);
+			if(src2->type=="char")
+			{
+				fprintf(x86codes,"movzx ecx,byte [ecx]\n");
+				num2="ecx";
+			}
 		}
 	}
 }
@@ -340,18 +427,86 @@ static void generate_basic(quadfunc *nowfunc)//
 			handle_src1(nowquad->src1,num1);
 			fprintf(x86codes,"push %s\n",num1.data());
 		}
-		else if(nowquad->opr=="larray")
-		{
+		else if(nowquad->opr=="larray")//larray src1 src2 ans : ans=src1[src2]
+		{//地址肯定小于0
+			string num1,ans="edx";
+			handle_src1(nowquad->src2,num1);
+			if(nowquad->src1->level==level)
+			{
+				fprintf(x86codes,"mov edx,ebp\nsub edx,%d\nimul %s,4\nsub edx,%s\n"
+						,-nowquad->src1->adr,num1.data(),num1.data(),ans.data());
+			}
+			else
+			{
+				fprintf(x86codes,"mov edx,[ebp+%d]\n,sub edx,%d\nimul %s,4\nsub edx,%s\n",
+					20+nowquad->src1->level*4,-nowquad->src1->adr,num1.data(),num1.data(),ans.data());	
+			}
+			if(nowquad->src1->type=="integer")
+				fprintf(x86codes,"mov edx,[edx]\n");
+			else
+				fprintf(x86codes,"movzx edx,byte [edx]\n");
+
+			handle_ans(nowquad->ans,ans);
 		}
 		else if(nowquad->opr=="sarray")
 		{
+			string num1;
+			handle_src1(nowquad->src2,num1);
+			if(nowquad->src1->level==level)
+			{
+				fprintf(x86codes,"mov edx,ebp\nsub edx,%d\nimul %s,4\nsub edx,%s\n"
+						,-nowquad->src1->adr,num1.data(),num1.data());
+			}
+			else
+			{
+				fprintf(x86codes,"mov edx,[ebp+%d]\n,sub edx,%d\nimul %s,4\nsub edx,%s\n",
+					20+nowquad->src1->level*4,-nowquad->src1->adr,num1.data(),num1.data());	
+			}
+			handle_src1(nowquad->ans,num1);
+			fprintf(x86codes,"mov [edx],%s\n",num1.data());
+		}
+		else if(nowquad->opr=="writes")
+		{
+			fprintf(x86codes,"push str%d\ncall printf\nadd esp,4\n",nowquad->src1->value);
+		}
+		else if(nowquad->opr=="writee")//tmp var的类型们不一定是int
+		{
+			string num1;
+			handle_src1(nowquad->src1,num1);		
+			if(nowquad->src1->type=="integer")
+			{
+				fprintf(x86codes,"push %s\npush strint\ncall printf\nadd esp,8\n",num1.data());
+			}
+			else
+			{
+				fprintf(x86codes,"push %s\npush strchar\ncall printf\nadd esp,8\n",num1.data());
+			}
+		}
+		else if(nowquad->opr=="read")
+		{
+			if(nowquad->src1->type=="integer")
+				fprintf(x86codes,"sub esp,4\npush esp\n push strint\ncall scanf\nadd esp,8\nmov eax,[esp]\n");
+			else
+				fprintf(x86codes,"sub esp,4\npush esp\n push strchar\ncall scanf\nadd esp,8\nmovzx eax,byte[esp]\n");
+				handle_ans(nowquad->src1,"eax");
+				fprintf(x86codes,"add esp,4\n");
+		}
+		else
+		{
+			cout << "IMPOSSIBLE!"<<endl;
 		}
 		nowquad=nowquad->link;
 	}
 }
 void generate_main()
 {
-	fputs("global main\nextern printf\nsection .data\nstr:'\%d',0\nsection .text\n",x86codes);
+	fputs("global main\nextern printf\nextern scanf\nsection .data\nstrint:db'\%d',0\nstrchar: db'%c',0\n",x86codes);
+	for(int i=1;i<my_writes_num;i++)
+	{
+		fprintf(x86codes,"str%d: db \"%s\",10,0\n",i,my_write_string.front().data());
+		my_write_string.pop();
+	}
+	fprintf(x86codes,"section .text\n");
 	quadfunc *nowfunc=quadruple_codes;
 	while(nowfunc)
 	{

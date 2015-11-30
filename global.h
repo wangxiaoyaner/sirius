@@ -93,3 +93,5 @@ void parser_program();
 
 void optimazation_adr_alloc();
 void generate_main();
+extern int my_writes_num;
+extern queue<string> my_write_string;

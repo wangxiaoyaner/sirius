@@ -1,4 +1,6 @@
 #include"global.h"
+queue<string> my_write_string;
+int my_writes_num=1;
 static int parser_procedure();
 static int parser_compoundstatement();
 static int parser_constdefinition();
@@ -70,7 +72,15 @@ static symbItem* parser_create_new_lable()
 static symbItem* parser_create_new_const(symbItem *src)
 {
 	symbItem *ans=new symbItem();
-	ans->name=numtostring(src->value);
+	if(src->type=="char")
+	{
+		char tmp=src->value;
+		ans->name="\'";
+		ans->name+=tmp;
+		ans->name+="\'";
+	}
+	else
+		ans->name=numtostring(src->value);
 	ans->kind="constpool";
 	ans->value=src->value;
 	ans->type=src->type;
@@ -1175,8 +1185,9 @@ static int parser_statement(symbItem *forbid)
 		if(lex_sym=="string")
 		{
 			symbItem *item=new symbItem();
-			item->name=lex_token;
-			item->value=0;
+			item->name=lex_token;	
+			my_write_string.push(lex_token);
+			item->value=my_writes_num++;
 			item->kind="constpool";
 			item->type="string";//digit,char,string,lable
 			item->link=NULL;
