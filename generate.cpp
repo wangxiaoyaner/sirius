@@ -1,5 +1,6 @@
 #include"global.h"
 static int level;
+static int hasmetpara_pushglobalreg;
 static map<string,symbItem*> tmpregpool;//eax,ecx,edx;
 static map<int,symbItem*> globalregpool;
 static map<int ,string> adr_reg;
@@ -274,7 +275,8 @@ static  void handle_ans(symbItem *ans,string num1)
 		{//找到所在层的调用层的ebp，
 			if(ans->level+1==level)//仅差一层
 			{
-				fprintf(x86codes,"mov [ebp+%d],%s\n",4+4*ans->adr,num1.data());
+			//	fprintf(x86codes,"mov [ebp+%d],%s\n",4+4*ans->adr,num1.data());//如果仅差一层需要这个ebp应该是display区最外一层的ebp，而不是本层ebp
+				fprintf(x86codes,"mov edx,[ebp+%d]\nmov [edx+%d],%s",,4+4*ans->adr,num1.data());
 			}
 			else
 			{
@@ -301,10 +303,28 @@ static void generate_basic(quadfunc *nowfunc)//
 		{
 			fprintf(x86codes,"%s:\n",nowquad->src1->name.data());
 		}
+/*
+display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层模块,则:
+(1) 如果 j=i+1(即进入一个 BEGIN 类型的模块或调用当前模块局部声明
+的过程块),则复制 i 层的 display 区,然后增加一个指向 i 层模块活动记录基址
+的指针。
+(2) 如果 j<=i(即调用对当前模块来说是属于全程声明的过程模块),则来
+自 i 层模块活动记录中的 display 区前面 j-1 个入口将组成 j 层模块的 display
+区。
+*/
 		else if(nowquad->opr=="call")
-		{
+		{          /*i*/                           /*j*/                    
 			int callerlev=nowfunc->table->level,calleelev=nowquad->src1->level+1;//函数代码所在层次=定义层次+1
-			if(callerlev<=calleelev)
+			if(callerlev+1==calleelev)//main调用他自己定义的过程,需要加入callerlve的dispaly区以及callerlev的ebp，注意反填
+			{
+				fprintf(x86codes,"push ebp\n");
+				for(int i=(callerlev-1)*4;i>=0;)
+				{
+					fprintf(x86codes,"push dword [ebp+%d]\n",i+20);
+					i-=4;
+				}	
+			}
+			else//caller>=callee
 			{
 				for(int i=(calleelev-1)*4;i>=0;)
 				{
@@ -312,11 +332,8 @@ static void generate_basic(quadfunc *nowfunc)//
 					i-=4;
 				}
 			}
-			else
-			{
-				cout << "IMPOSSIBLE" << endl;
-			}
-			fprintf(x86codes,"push esi\npush edi\npush ebx\ncall _%s%d\npop ebx\npop edi\npop esi\nadd esp,%d\n",
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			fprintf(x86codes,"push esi\npush edi\npush ebx\ncall %s%d\npop ebx\npop edi\npop esi\nadd esp,%d\n",
 					nowquad->src1->name.data(),nowquad->src1->level+1,calleelev*4);
 
 		}
@@ -332,16 +349,16 @@ static void generate_basic(quadfunc *nowfunc)//
 			else
 				fprintf(x86codes,"mov esp,ebp\nret\n");
 		}
-		else if(nowquad->opr=="func")
+		else if(nowquad->opr=="func")//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		{
 			if(nowquad->src1->name=="main")
 			{
-				fprintf(x86codes,"_main0:\nmov ebp,esp\nsub esp,%d\n",nowfunc->table->localsnum*4+4);
+				fprintf(x86codes,"main:\nmov ebp,esp\nsub esp,%d\n",nowfunc->table->localsnum*4+4);
 			}
 			else
 			{
-				fprintf(x86codes,"_%s%d:\npush ebp\nmov ebp,esp\nsub esp,%d\n"
-						,nowquad->src1->name.data(),nowquad->src1->level,nowfunc->table->localsnum*4+4);
+				fprintf(x86codes,"%s%d:\npush ebp\nmov ebp,esp\nsub esp,%d\n"
+						,nowquad->src1->name.data(),nowquad->src1->level+1,nowfunc->table->localsnum*4+4);
 			}
 		}
 		else if(nowquad->opr=="jmp")
@@ -352,6 +369,11 @@ static void generate_basic(quadfunc *nowfunc)//
 		{//只需要一个寄存器就好。
 			string num1,num2;//结果将放到寄存器num1里面。
 			handle_src1(nowquad->src1,num1);
+			if(num1!="eax")
+			{
+				fprintf(x86codes,"mov eax,%s\n",num1.data());
+				num1="eax";
+			}
 			handle_src2(nowquad->src2,num2);
 			fprintf(x86codes,"%s %s,%s\n",nowquad->opr.data(),num1.data(),num2.data());
 			handle_ans(nowquad->ans,num1);
@@ -479,7 +501,7 @@ static void generate_basic(quadfunc *nowfunc)//
 			}
 			else
 			{
-				fprintf(x86codes,"push %s\npush strchar\ncall printf\nadd esp,8\n",num1.data());
+				fprintf(x86codes,"push %s\npush stroutchar\ncall printf\nadd esp,8\n",num1.data());
 			}
 		}
 		else if(nowquad->opr=="read")
@@ -500,7 +522,7 @@ static void generate_basic(quadfunc *nowfunc)//
 }
 void generate_main()
 {
-	fputs("global main\nextern printf\nextern scanf\nsection .data\nstrint:db'\%d',0\nstrchar: db'%c',0\n",x86codes);
+	fputs("global main\nextern printf\nextern scanf\nsection .data\nstrint:db'\%d',0\nstrchar: db' %c',0\nstroutchar: db '%c',0\n",x86codes);
 	for(int i=1;i<my_writes_num;i++)
 	{
 		fprintf(x86codes,"str%d: db \"%s\",10,0\n",i,my_write_string.front().data());

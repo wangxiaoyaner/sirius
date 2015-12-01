@@ -55,7 +55,6 @@ void symbtable_up_level()
 		{
 			symbtable_now->first_item=symbtable_now->first_item->link;
 			father->last_item=father->last_item->link;
-			father->last_item->level--;//参数建一层
 			father->last_item->adr=++i;
 			father->last_item->size=mysize;
 		}

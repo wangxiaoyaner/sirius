@@ -1435,7 +1435,7 @@ static int parser_condition(symbItem **src1,symbItem **src2,string &oprname)//�
 static int parser_realparameterlist(symbItem *func_proc)
 {//func后面一定要紧跟着参数信息，这是四元式中操作数的一部分，虽然你没用到他的值，但你用到的是他的其他信息;
 	//need to find the location of func or proc
-	queue<symbItem*> para_queue;
+	stack<symbItem*> para_stack;
 	symbItem *src;
 	if(lex_sym!="(")
 	{
@@ -1456,11 +1456,11 @@ static int parser_realparameterlist(symbItem *func_proc)
 		}
 		else
 		{
-			para_queue.push(operand_stack.top());
+			para_stack.push(operand_stack.top());
 			operand_stack.pop();
 		}
 	}while(lex_sym==",");
-	if((unsigned)func_proc->size!=para_queue.size())
+	if((unsigned)func_proc->size!=para_stack.size())
 	{
 		global_error("wrong num of parametes in \""+func_proc->name+"\"call.");
 		return 0;
@@ -1473,8 +1473,8 @@ static int parser_realparameterlist(symbItem *func_proc)
 		k=symbtable_now->first_item;
 	for(int i=1;i<=j;i++)
 	{
-		src=para_queue.front();
-		para_queue.pop();
+		src=para_stack.top();
+		para_stack.pop();
 		if(k->para_ifvar&&src->kind!="const")//可能撤表了也可能没撤表
 			global_new_quadruple("rpara",src,func_proc,NULL);
 		else
