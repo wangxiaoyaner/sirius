@@ -1,0 +1,333 @@
+global main
+extern printf
+extern scanf
+section .data
+strint:db'%d',0
+strchar: db' %c',0
+stroutchar: db '%c',0
+str1: db "        Result: ",10,0
+str2: db "    ",10,0
+str3: db "Test for:input n,output:n+n-1+...+1;   ",10,0
+str4: db "Test read:Read num is ",10,0
+str5: db "Test function:input a,b;output:gcd(a,b)   ",10,0
+str6: db "Test proc :input n,n nums,output:sum of n nums    ",10,0
+str7: db "+",10,0
+str8: db "=",10,0
+str9: db "     ",10,0
+section .text
+println1:
+push ebp
+mov ebp,esp
+sub esp,16
+push str1
+call printf
+add esp,4
+mov eax,[ebp+8]
+sub eax,8
+mov eax,[eax]
+push eax
+push strint
+call printf
+add esp,8
+push str2
+call printf
+add esp,4
+mov eax,'B'
+add eax,'y'
+mov ebx,eax
+mov edx,[ebp+8]
+sub edx,12
+mov [edx],ebx
+mov eax,[ebp-4]
+mov esp,ebp
+pop ebp
+ret
+nsum1:
+push ebp
+mov ebp,esp
+sub esp,28
+mov eax,0
+mov edx,[ebp+12]
+mov [edx],eax
+mov eax,0
+mov edx,[ebp+8]
+sub edx,24
+mov [edx],eax
+sub esp,4
+push esp
+ push strint
+call scanf
+add esp,8
+mov eax,[esp]
+mov ebx,eax
+add esp,4
+lab1:
+sub esp,4
+push esp
+ push strint
+call scanf
+add esp,8
+mov eax,[esp]
+mov edi,eax
+add esp,4
+mov eax,[ebp+8]
+sub eax,24
+mov eax,[eax]
+mov edx,[ebp+8]
+sub edx,28
+imul eax,4
+sub edx,eax
+mov [edx],edi
+mov eax,[ebp+8]
+sub eax,24
+mov eax,[eax]
+add eax,1
+mov esi,eax
+mov edx,[ebp+8]
+sub edx,24
+mov [edx],esi
+mov eax,edi
+mov ecx,[ebp+12]
+add eax,[ecx]
+mov [ebp-20],eax
+mov eax,[ebp-20]
+mov edx,[ebp+12]
+mov [edx],eax
+mov eax,ebx
+sub eax,1
+mov [ebp-24],eax
+mov eax,[ebp-24]
+mov ebx,eax
+mov eax,'y'
+add eax,'e'
+mov [ebp-28],eax
+mov eax,[ebp-28]
+mov edx,[ebp+8]
+sub edx,20
+mov [edx],eax
+cmp ebx,0
+jne lab1
+mov eax,[ebp-4]
+mov esp,ebp
+pop ebp
+ret
+gcd1:
+push ebp
+mov ebp,esp
+sub esp,24
+mov eax,[ebp+12]
+cmp eax,[ebp+16]
+jge lab2
+mov eax,[ebp+16]
+mov ebx,eax
+mov eax,[ebp+12]
+mov [ebp+16],eax
+mov [ebp+12],ebx
+lab2:
+mov eax,[ebp+12]
+cdq
+idiv dword [ebp+16]
+mov edi,eax
+mov ebx,edi
+mov eax,[ebp+16]
+imul eax,ebx
+mov esi,eax
+mov eax,[ebp+12]
+sub eax,esi
+mov [ebp-20],eax
+mov eax,[ebp-20]
+mov ebx,eax
+cmp ebx,0
+jne lab3
+mov eax,[ebp+16]
+mov [ebp-4],eax
+jmp lab4
+lab3:
+push ebx
+mov eax,[ebp+16]
+push eax
+push dword [ebp+8]
+mov [ebp-8],ebx
+mov [ebp-12],edi
+mov [ebp-16],esi
+call gcd1
+mov ebx,[ebp-8]
+mov edi,[ebp-12]
+mov esi,[ebp-16]
+add esp,12
+mov [ebp-24],eax
+mov eax,[ebp-24]
+mov [ebp-4],eax
+lab4:
+mov eax,[ebp-4]
+mov esp,ebp
+pop ebp
+ret
+main:
+mov ebp,esp
+sub esp,448
+push str3
+call printf
+add esp,4
+sub esp,4
+push esp
+ push strint
+call scanf
+add esp,8
+mov eax,[esp]
+mov edi,eax
+add esp,4
+push str4
+call printf
+add esp,4
+push edi
+push strint
+call printf
+add esp,8
+mov eax,0
+mov ebx,eax
+mov esi,edi
+lab5:
+cmp esi,1
+jl lab6
+mov eax,ebx
+add eax,esi
+mov [ebp-428],eax
+mov eax,[ebp-428]
+mov ebx,eax
+dec esi
+jmp lab5
+lab6:
+push ebp
+mov [ebp-8],ebx
+mov [ebp-12],edi
+mov [ebp-16],esi
+call println1
+mov ebx,[ebp-8]
+mov edi,[ebp-12]
+mov esi,[ebp-16]
+add esp,0
+push str5
+call printf
+add esp,4
+sub esp,4
+push esp
+ push strint
+call scanf
+add esp,8
+mov eax,[esp]
+mov esi,eax
+add esp,4
+sub esp,4
+push esp
+ push strint
+call scanf
+add esp,8
+mov eax,[esp]
+mov [ebp-20],eax
+add esp,4
+mov eax,[ebp-20]
+push eax
+push esi
+push ebp
+mov [ebp-8],ebx
+mov [ebp-12],edi
+mov [ebp-16],esi
+call gcd1
+mov ebx,[ebp-8]
+mov edi,[ebp-12]
+mov esi,[ebp-16]
+add esp,8
+mov [ebp-432],eax
+mov eax,[ebp-432]
+mov ebx,eax
+push ebp
+mov [ebp-8],ebx
+mov [ebp-12],edi
+mov [ebp-16],esi
+call println1
+mov ebx,[ebp-8]
+mov edi,[ebp-12]
+mov esi,[ebp-16]
+add esp,0
+push str6
+call printf
+add esp,4
+lea eax,[ebp-8]
+push eax
+push ebp
+mov [ebp-8],ebx
+mov [ebp-12],edi
+mov [ebp-16],esi
+call nsum1
+mov ebx,[ebp-8]
+mov edi,[ebp-12]
+mov esi,[ebp-16]
+add esp,4
+mov eax,0
+mov esi,eax
+mov eax,[ebp-24]
+sub eax,2
+mov [ebp-436],eax
+lab7:
+cmp esi,[ebp-436]
+jg lab8
+mov edx,ebp
+sub edx,28
+imul esi,4
+sub edx,esi
+mov edx,[edx]
+mov [ebp-440],edx
+mov eax,[ebp-440]
+push eax
+push strint
+call printf
+add esp,8
+push str7
+call printf
+add esp,4
+inc esi
+jmp lab7
+lab8:
+mov eax,[ebp-24]
+sub eax,1
+mov [ebp-448],eax
+mov eax,[ebp-448]
+mov edx,ebp
+sub edx,28
+imul eax,4
+sub edx,eax
+mov edx,[edx]
+mov [ebp-444],edx
+mov eax,[ebp-444]
+push eax
+push strint
+call printf
+add esp,8
+push str8
+call printf
+add esp,4
+push ebx
+push strint
+call printf
+add esp,8
+push str9
+call printf
+add esp,4
+mov eax,'B'
+push eax
+push stroutchar
+call printf
+add esp,8
+mov eax,'y'
+push eax
+push stroutchar
+call printf
+add esp,8
+mov eax,'e'
+push eax
+push stroutchar
+call printf
+add esp,8
+mov esp,ebp
+ret

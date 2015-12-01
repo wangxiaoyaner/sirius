@@ -1,0 +1,10 @@
+1.新建工程可以在
+c:/cygwin64/home/TF下
+然后nasm -f win32 文件名.asm
+将.obj拷贝到c:/user/TF下
+打开命令提示符
+link x86codes.obj msvcrt.lib
+完成链接
+然后执行文件名.exe文件
+每一个函数名func call 声明区printf,scanf,main
+前面一定要加_

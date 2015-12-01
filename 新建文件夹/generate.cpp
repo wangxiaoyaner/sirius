@@ -305,7 +305,7 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 				}
 			}
 			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			fprintf(x86codes,"mov [ebp-8],ebx\nmov [ebp-12],edi\nmov [ebp-16],esi\ncall _%s%d\nmov ebx,[ebp-8]\nmov edi,[ebp-12]\nmov esi,[ebp-16]\nadd esp,%d\n",
+			fprintf(x86codes,"mov [ebp-8],ebx\nmov [ebp-12],edi\nmov [ebp-16],esi\ncall %s%d\nmov ebx,[ebp-8]\nmov edi,[ebp-12]\nmov esi,[ebp-16]\nadd esp,%d\n",
 					nowquad->src1->name.data(),nowquad->src1->level+1,(nowquad->src1->size+mynum)*4);
 
 		}

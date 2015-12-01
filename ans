@@ -1,0 +1,174 @@
+hello,world
+name	level	kind	type	size	para_ifvar	value	if_used	adr
+NAME:main	localsnum:0
+a	0	const	char	0	0	66	0	0
+b	0	const	char	0	0	121	0	0
+c	0	const	char	0	0	101	0	0
+Test1	0	var	integer	0	0	0	1	0
+n	0	var	integer	0	0	0	1	0
+tmpi	0	var	integer	0	0	0	0	0
+tmpj	0	var	integer	0	0	0	1	0
+arraynum	0	var	integer	0	0	0	1	0
+data	0	array	integer	100	0	0	0	0
+println	0	procedure		0	0	0	0	0
+nsum	0	procedure		1	0	0	0	0
+sum	1	parameter	integer	1	1	0	0	1
+gcd	0	function	integer	2	0	0	0	0
+tmpi	1	parameter	integer	2	0	0	0	1
+tmpj	1	parameter	integer	2	0	0	0	2
+_10	0	var	integer	0	0	0	0	0
+_11	0	var	integer	0	0	0	0	0
+_12	0	var	integer	0	0	0	0	0
+_13	0	var	integer	0	0	0	0	0
+_14	0	var	integer	0	0	0	0	0
+_15	0	var	integer	0	0	0	0	0
+NAME:println	localsnum:0
+_1	1	var	integer	0	0	0	0	0
+NAME:nsum	localsnum:0
+nums	1	var	integer	0	0	0	0	0
+i	1	var	integer	0	0	0	0	0
+_2	1	var	integer	0	0	0	0	0
+_3	1	var	integer	0	0	0	0	0
+_4	1	var	integer	0	0	0	0	0
+_5	1	var	integer	0	0	0	0	0
+NAME:gcd	localsnum:0
+i	1	var	integer	0	0	0	0	0
+_6	1	var	integer	0	0	0	0	0
+_7	1	var	integer	0	0	0	0	0
+_8	1	var	integer	0	0	0	0	0
+_9	1	var	integer	0	0	0	0	0
+name	level	kind	type	size	para_ifvar	value	if_used	adr
+NAME:main	localsnum:108
+a	0	const	char	0	0	66	0	0
+b	0	const	char	0	0	121	0	0
+c	0	const	char	0	0	101	0	0
+Test1	0	var	integer	0	0	0	1	1
+n	0	var	integer	0	0	0	1	2
+tmpi	0	var	integer	0	0	0	0	3
+tmpj	0	var	integer	0	0	0	1	-20
+arraynum	0	var	integer	0	0	0	1	-24
+data	0	array	integer	100	0	0	0	-28
+println	0	procedure		0	0	0	0	0
+nsum	0	procedure		1	0	0	0	0
+sum	1	parameter	integer	1	1	0	0	1
+gcd	0	function	integer	2	0	0	0	0
+tmpi	1	parameter	integer	2	0	0	0	1
+tmpj	1	parameter	integer	2	0	0	0	2
+_10	0	var	integer	0	0	0	0	-428
+_11	0	var	integer	0	0	0	0	-432
+_12	0	var	integer	0	0	0	0	-436
+_13	0	var	integer	0	0	0	0	-440
+_14	0	var	integer	0	0	0	0	-444
+_15	0	var	integer	0	0	0	0	-448
+NAME:println	localsnum:0
+_1	1	var	integer	0	0	0	0	1
+NAME:nsum	localsnum:3
+nums	1	var	integer	0	0	0	0	1
+i	1	var	integer	0	0	0	0	2
+_2	1	var	integer	0	0	0	0	3
+_3	1	var	integer	0	0	0	0	-20
+_4	1	var	integer	0	0	0	0	-24
+_5	1	var	integer	0	0	0	0	-28
+NAME:gcd	localsnum:2
+i	1	var	integer	0	0	0	0	1
+_6	1	var	integer	0	0	0	0	2
+_7	1	var	integer	0	0	0	0	3
+_8	1	var	integer	0	0	0	0	-20
+_9	1	var	integer	0	0	0	0	-24
+函数的名字是：printlnwhh	1 函数内容如下:
+func	println	
+writes	        Result: 	
+writee	Test1	
+writes	    	
+add	'B'	'y'	_1
+assign	_1	n
+ret	
+函数的名字是：nsumwhh	1 函数内容如下:
+func	nsum	
+assign	0	sum
+assign	0	arraynum
+read	nums	
+lab	lab1	
+read	i	
+sarray	data	arraynum	i
+add	arraynum	1	_2
+assign	_2	arraynum
+add	i	sum	_3
+assign	_3	sum
+sub	nums	1	_4
+assign	_4	nums
+add	'y'	'e'	_5
+assign	_5	tmpj
+jne	nums	0	lab1
+ret	
+函数的名字是：gcdwhh	1 函数内容如下:
+func	gcd	
+jge	tmpi	tmpj	lab2
+assign	tmpj	i
+assign	tmpi	tmpj
+assign	i	tmpi
+lab	lab2	
+idiv	tmpi	tmpj	_6
+assign	_6	i
+imul	tmpj	i	_7
+sub	tmpi	_7	_8
+assign	_8	i
+jne	i	0	lab3
+assign	tmpj	gcd
+jmp	lab4	
+lab	lab3	
+fpara	i	gcd	
+fpara	tmpj	gcd	
+call	gcd	
+assign	gcd	_9
+assign	_9	gcd
+lab	lab4	
+ret	
+函数的名字是：mainwhh	0 函数内容如下:
+func	main	
+writes	Test for:input n,output:n+n-1+...+1;   	
+read	n	
+writes	Test read:Read num is 	
+writee	n	
+assign	0	Test1
+assign	n	tmpi
+lab	lab5	
+jl	tmpi	1	lab6
+add	Test1	tmpi	_10
+assign	_10	Test1
+dec	tmpi	
+jmp	lab5	
+lab	lab6	
+call	println	
+writes	Test function:input a,b;output:gcd(a,b)   	
+read	tmpi	
+read	tmpj	
+fpara	tmpj	gcd	
+fpara	tmpi	gcd	
+call	gcd	
+assign	gcd	_11
+assign	_11	Test1
+call	println	
+writes	Test proc :input n,n nums,output:sum of n nums    	
+rpara	Test1	nsum	
+call	nsum	
+assign	0	tmpi
+sub	arraynum	2	_12
+lab	lab7	
+jg	tmpi	_12	lab8
+larray	data	tmpi	_13
+writee	_13	
+writes	+	
+inc	tmpi	
+jmp	lab7	
+lab	lab8	
+sub	arraynum	1	_15
+larray	data	_15	_14
+writee	_14	
+writes	=	
+writee	Test1	
+writes	     	
+writee	'B'	
+writee	'y'	
+writee	'e'	
+ret	

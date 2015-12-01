@@ -21,7 +21,7 @@ procedure nsum(var sum:integer);
                 nums:=nums-1;
 				tmpj:=b+c;
             end
-        while nums<>0;        
+        while nums=0;        
     end;
 function gcd(tmpi,tmpj:integer):integer;
 var i:integer;
