@@ -4,7 +4,7 @@ const string lex_words[]={"(", ")", "*", "+", ",", "-", ".", "/", ";", "=", "[",
 FILE *sourcefile,*out;
 string lex_token="",lex_sym="";
 int single_quote_mark=0;
-int lex_value=0,lex_line_no=0,lex_char_i=-1,lex_mark=0;
+int lex_value=0,lex_line_no=0,lex_char_i=0,lex_mark=0;
 char lex_ch;
 char lex_line[LEX_MAX_LINE]="\n";
 void lex_bye()
@@ -30,7 +30,7 @@ int lex_find_words(string goal)
 
 void lex_getch()
 {
-	if(lex_line[lex_char_i]=='\n'||lex_line[++lex_char_i]=='\n')
+	if(lex_char_i!=-1&&lex_line[lex_char_i]=='\n'/*||lex_line[++lex_char_i]=='\n'*/)
 	{
 		if(fgets(lex_line,LEX_MAX_LINE,sourcefile)==NULL)
 		{
@@ -42,6 +42,8 @@ void lex_getch()
 		lex_line_no++;//
 		lex_char_i=0;
 	}
+	else
+		lex_char_i++;
 	lex_ch=lex_line[lex_char_i];
 }
 
@@ -56,6 +58,19 @@ int lex_getsym()//lex_getch first
 		}
 		while(isspace(lex_ch))
 		{
+			if(lex_ch=='\n')
+			{
+				if(fgets(lex_line,LEX_MAX_LINE,sourcefile)==NULL)
+				{
+					lex_ch=0;//end
+					lex_mark=1;//file end mark
+				}
+				else
+				{
+					lex_line_no++;//
+					lex_char_i=-1;
+				}
+			}
 			lex_getch();
 		}
 		if(isalpha(lex_ch))

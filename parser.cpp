@@ -746,11 +746,11 @@ static int parser_expression()
 			return 0;
 		src2=operand_stack.top();
 		operand_stack.pop();
-		if(src2->kind=="const")
+		if(src2&&src2->kind=="const")
 			src2=parser_create_new_const(src2);
 		src1=operand_stack.top();
 		operand_stack.pop();
-		if(src1->kind=="const")
+		if(src1&&src1->kind=="const")
 			src1=parser_create_new_const(src1);
 		parser_create_new_var();
 		ans=symbtable_now->last_item;
@@ -771,10 +771,10 @@ static int parser_term(int &if_low_zero)
 		ans=symbtable_now->last_item;
 		src1=operand_stack.top();
 		operand_stack.pop();
-		if(src1->kind=="const")
+		if(src1&&src1->kind=="const")
 			src1=parser_create_new_const(src1);
 		global_new_quadruple("assign",src1,NULL,ans);
-		global_new_quadruple("neg",NULL,NULL,ans);
+		global_new_quadruple("neg",ans,NULL,NULL);
 		operand_stack.push(ans);
 		if_low_zero=0;
 	}
@@ -788,11 +788,11 @@ static int parser_term(int &if_low_zero)
 		ans=symbtable_now->last_item;
 		src2=operand_stack.top();
 		operand_stack.pop();
-		if(src2->kind=="const")
+		if(src2&&src2->kind=="const")
 			src2=parser_create_new_const(src2);
 		src1=operand_stack.top();
 		operand_stack.pop();
-		if(src1->kind=="const")
+		if(src1&&src1->kind=="const")
 			src1=parser_create_new_const(src1);
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
@@ -1048,7 +1048,7 @@ static int parser_statement(symbItem *forbid)
 				return 0;
 			symbItem *src1=operand_stack.top();
 			operand_stack.pop();
-			if(src1->kind=="const")
+			if(src1&&src1->kind=="const")
 				src1=parser_create_new_const(src1);
 			global_new_quadruple("assign",src1,NULL,tmp);
         }
@@ -1096,9 +1096,9 @@ static int parser_statement(symbItem *forbid)
 		else
 		{
 			oprname=global_anti_ralation[oprname];
-			if(src1->kind=="const")
+			if(src1&&src1->kind=="const")
 				src1=parser_create_new_const(src1);
-			if(src2->kind=="const")
+			if(src2&&src2->kind=="const")
 				src2=parser_create_new_const(src2);
 			global_new_quadruple(oprname,src1,src2,lable1);
 		}
@@ -1159,9 +1159,9 @@ static int parser_statement(symbItem *forbid)
 		if(!parser_condition(&src1,&src2,oprname))
 			return 0;
 		oprname=global_ralation[oprname];
-		if(src1->kind=="const")
+		if(src1&&src1->kind=="const")
 			src1=parser_create_new_const(src1);	
-		if(src2->kind=="const")
+		if(src2&&src2->kind=="const")
 			src2=parser_create_new_const(src2);
 		global_new_quadruple(oprname,src1,src2,lable1);
 	}
@@ -1416,7 +1416,6 @@ static int parser_condition(symbItem **src1,symbItem **src2,string &oprname)//ä¼
 		*src1=operand_stack.top();
 		operand_stack.pop();
 	}
-
 	oprname=lex_sym;
 	if(!if_ralation_opr(oprname))
 	{

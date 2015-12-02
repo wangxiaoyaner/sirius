@@ -6,15 +6,15 @@ quadfunc *quadruple_codes_now=NULL;
 stack<symbItem*> global_const_pool;
 int global_lex_line_num=0;
 int global_lex_lie_num=0;
-int global_error_num=1;
+int global_error_num=0;
 
 void global_error(string right,string wrong)
 {	
-	cout << "error "<< global_error_num++ <<" : line[" << global_lex_line_num<<"," <<global_lex_lie_num<< "]   \"" << right <<"\" expected, but \""<<wrong<<"\" found\t\n";
+	cout << "error "<< ++global_error_num <<" : line[" << global_lex_line_num<<"," <<global_lex_lie_num<< "]   \"" << right <<"\" expected, but \""<<wrong<<"\" found\t\n";
 }
 void global_error(string words)
 {
-		cout << "error "<< global_error_num++ <<" : line[" << global_lex_line_num <<","<<global_lex_lie_num<< "]   " << words<<"\n";
+		cout << "error "<< ++global_error_num <<" : line[" << global_lex_line_num <<","<<global_lex_lie_num<< "]   " << words<<"\n";
 }
 
 void global_new_quadruple(string opr,symbItem *src1,symbItem *src2,symbItem *ans)

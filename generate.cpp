@@ -305,7 +305,7 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 				}
 			}
 			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			fprintf(x86codes,"mov [ebp-8],ebx\nmov [ebp-12],edi\nmov [ebp-16],esi\ncall _%s%d\nmov ebx,[ebp-8]\nmov edi,[ebp-12]\nmov esi,[ebp-16]\nadd esp,%d\n",
+			fprintf(x86codes,"mov [ebp-8],ebx\nmov [ebp-12],edi\nmov [ebp-16],esi\ncall %s%d\nmov ebx,[ebp-8]\nmov edi,[ebp-12]\nmov esi,[ebp-16]\nadd esp,%d\n",
 					nowquad->src1->name.data(),nowquad->src1->level+1,(nowquad->src1->size+mynum)*4);
 
 		}
@@ -325,11 +325,11 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		{
 			if(nowquad->src1->name=="main")
 			{
-				fprintf(x86codes,"_main:\nmov ebp,esp\nsub esp,%d\n",nowfunc->table->localsnum*4+16);
+				fprintf(x86codes,"main:\nmov ebp,esp\nsub esp,%d\n",nowfunc->table->localsnum*4+16);
 			}
 			else
 			{
-				fprintf(x86codes,"_%s%d:\npush ebp\nmov ebp,esp\nsub esp,%d\n"
+				fprintf(x86codes,"%s%d:\npush ebp\nmov ebp,esp\nsub esp,%d\n"
 						,nowquad->src1->name.data(),nowquad->src1->level+1,nowfunc->table->localsnum*4+16);
 			}
 		}
@@ -427,13 +427,18 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		{//地址肯定小于0
 			string num1,ans="edx";
 			handle_src1(nowquad->src2,num1);
+			if(num1!="eax")
+			{
+				fprintf(x86codes,"mov eax,%s\n",num1.data());
+				num1="eax";
+			}
 			if(nowquad->src1->level==level)
 			{
 				fprintf(x86codes,"mov edx,ebp\nsub edx,%d\nimul %s,4\nsub edx,%s\n"
 						,-nowquad->src1->adr,num1.data(),num1.data(),ans.data());
 			}
 			else
-			{
+			{//寻址的时候没有考虑地址是一个循环变量不能改变的问题而你直接imul四了
 				fprintf(x86codes,"mov edx,[ebp+%d]\nsub edx,%d\nimul %s,4\nsub edx,%s\n",
 					8+nowquad->src1->level*4,-nowquad->src1->adr,num1.data(),num1.data(),ans.data());	
 			}
@@ -448,6 +453,11 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		{
 			string num1;
 			handle_src1(nowquad->src2,num1);
+			if(num1!="eax")
+			{
+				fprintf(x86codes,"mov eax,%s\n",num1.data());
+				num1="eax";
+			}	
 			if(nowquad->src1->level==level)
 			{
 				fprintf(x86codes,"mov edx,ebp\nsub edx,%d\nimul %s,4\nsub edx,%s\n"
@@ -463,7 +473,7 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		}
 		else if(nowquad->opr=="writes")
 		{
-			fprintf(x86codes,"push str%d\ncall _printf\nadd esp,4\n",nowquad->src1->value);
+			fprintf(x86codes,"push str%d\ncall printf\nadd esp,4\n",nowquad->src1->value);
 		}
 		else if(nowquad->opr=="writee")//tmp var的类型们不一定是int
 		{
@@ -471,19 +481,19 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 			handle_src1(nowquad->src1,num1);		
 			if(nowquad->src1->type=="integer")
 			{
-				fprintf(x86codes,"push %s\npush strint\ncall _printf\nadd esp,8\n",num1.data());
+				fprintf(x86codes,"push %s\npush strint\ncall printf\nadd esp,8\n",num1.data());
 			}
 			else
 			{
-				fprintf(x86codes,"push %s\npush stroutchar\ncall _printf\nadd esp,8\n",num1.data());
+				fprintf(x86codes,"push %s\npush stroutchar\ncall printf\nadd esp,8\n",num1.data());
 			}
 		}
 		else if(nowquad->opr=="read")
 		{
 			if(nowquad->src1->type=="integer")
-				fprintf(x86codes,"sub esp,4\npush esp\n push strint\ncall _scanf\nadd esp,8\nmov eax,[esp]\n");
+				fprintf(x86codes,"sub esp,4\npush esp\n push strint\ncall scanf\nadd esp,8\nmov eax,[esp]\n");
 			else
-				fprintf(x86codes,"sub esp,4\npush esp\n push strchar\ncall _scanf\nadd esp,8\nmovzx eax,byte[esp]\n");
+				fprintf(x86codes,"sub esp,4\npush esp\n push strchar\ncall scanf\nadd esp,8\nmovzx eax,byte[esp]\n");
 				handle_ans(nowquad->src1,"eax");
 				fprintf(x86codes,"add esp,4\n");
 		}
@@ -496,7 +506,7 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 }
 void generate_main()
 {
-	fputs("global _main\nextern _printf\nextern _scanf\nsection .data\nstrint:db'\%d',0\nstrchar: db' %c',0\nstroutchar: db '%c',0\n",x86codes);
+	fputs("global main\nextern printf\nextern scanf\nsection .data\nstrint:db'\%d',0\nstrchar: db' %c',0\nstroutchar: db '%c',0\n",x86codes);
 	for(int i=1;i<my_writes_num;i++)
 	{
 		fprintf(x86codes,"str%d: db \"%s\",10,0\n",i,my_write_string.front().data());
