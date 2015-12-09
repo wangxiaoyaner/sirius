@@ -50,11 +50,16 @@ static void handle_src1(symbItem *src1,string &num1)//将操作数的值所在�
 		}
 		else if(src1->adr%4)
 		{
-			num1=adr_reg[src1->adr];
+			if(src1->kind!="arrvar")
+				num1=adr_reg[src1->adr];
+			else
+				fprintf(x86codes,"mov eax,[%s]\n",adr_reg[src1->adr].data());
 		}
 		else
 		{
-			if(src1->type=="integer")
+			if(src1->kind=="arrvar")
+				fprintf(x86codes,"mov eax,[ebp%d]\nmov eax,[eax]\n",src1->adr);
+			else if(src1->type=="integer")
 				fprintf(x86codes,"mov eax,[ebp-%d]\n",-src1->adr);
 			else 
 				fprintf(x86codes,"movzx eax,byte [ebp-%d]\n",-src1->adr);
@@ -143,11 +148,22 @@ static void handle_src2(symbItem *src2,string &num2)
 		}
 		else if(src2->adr%4)
 		{
-			num2=adr_reg[src2->adr];
+			if(src2->kind!="arrvar")
+				num2=adr_reg[src2->adr];
+			else
+			{
+				fprintf(x86codes,"mov ecx,%s\n",adr_reg[src2->adr].data());
+				num2="[ecx]";
+			}
 		}
 		else
 		{
-			if(src2->type=="integer")
+			if(src2->kind=="arrvar")
+			{
+				fprintf(x86codes,"mov ecx,[ebp%d]\n",src2->adr);
+				num2="[ecx]";
+			}
+			else if(src2->type=="integer")
 			{
 				string tmp=src2->adr>0?"+":"";
 				tmp+=numtostring(src2->adr);
@@ -409,7 +425,14 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		else if(nowquad->opr=="rpara")//rpara增加一个参数(笑脸)取地址或者全局寄存器
 		{
 			string num2;
-			if(nowquad->src1->adr%4&&nowquad->src1->level==level)
+			if(nowquad->src1->kind=="arrvar")
+			{
+				if(nowquad->src1->adr%4)
+					fprintf(x86codes,"push %s\n",adr_reg[nowquad->src1->adr].data());
+				else
+					fprintf(x86codes,"push dword [ebp%d]\n",nowquad->src1->adr);
+			}
+			else if(nowquad->src1->adr%4&&nowquad->src1->level==level)
 			{	
 				fprintf(x86codes,"lea eax,[ebp-%d]\npush eax\n",4+nowquad->src1->adr*4);
 			}else{
@@ -421,6 +444,7 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		{
 			string num1;
 			handle_src1(nowquad->src1,num1);
+
 			fprintf(x86codes,"push %s\n",num1.data());
 		}
 		else if(nowquad->opr=="larray")//larray src1 src2 ans : ans=src1[src2]
@@ -431,21 +455,23 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 			{
 				fprintf(x86codes,"mov eax,%s\n",num1.data());
 				num1="eax";
-			}
+			}//src1在eax里
 			if(nowquad->src1->level==level)
 			{
-				fprintf(x86codes,"mov edx,ebp\nsub edx,%d\nimul %s,4\nsub edx,%s\n"
-						,-nowquad->src1->adr,num1.data(),num1.data(),ans.data());
+				/*	fprintf(x86codes,"mov edx,ebp\nsub edx,%d\nimul %s,4\nsub edx,%s\n"
+						,-nowquad->src1->adr,num1.data(),num1.data(),ans.data());*/
+				fprintf(x86codes,"lea edx,[ebp+eax*4%d]\n",nowquad->src1->adr);
 			}
 			else
 			{//寻址的时候没有考虑地址是一个循环变量不能改变的问题而你直接imul四了
-				fprintf(x86codes,"mov edx,[ebp+%d]\nsub edx,%d\nimul %s,4\nsub edx,%s\n",
-					8+nowquad->src1->level*4,-nowquad->src1->adr,num1.data(),num1.data(),ans.data());	
+			/*	fprintf(x86codes,"mov edx,[ebp+%d]\nsub edx,%d\nimul %s,4\nsub edx,%s\n",
+					8+nowquad->src1->level*4,-nowquad->src1->adr,num1.data(),num1.data(),ans.data());	*/
+				fprintf(x86codes,"mov edx,[ebp+%d]\nlea edx,[edx+eax*4%d]\n",8+nowquad->src1->level*4,nowquad->src1->adr);
 			}
-			if(nowquad->src1->type=="integer")
+			/*	if(nowquad->src1->type=="integer")
 				fprintf(x86codes,"mov edx,[edx]\n");
 			else
-				fprintf(x86codes,"movzx edx,byte [edx]\n");
+				fprintf(x86codes,"movzx edx,byte [edx]\n");*/
 
 			handle_ans(nowquad->ans,ans);
 		}
@@ -453,20 +479,22 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		{
 			string num1;
 			handle_src1(nowquad->src2,num1);
-			if(num1!="eax")
+			if(num1!="ecx")
 			{
-				fprintf(x86codes,"mov eax,%s\n",num1.data());
-				num1="eax";
+				fprintf(x86codes,"mov ecx,%s\n",num1.data());
+				num1="ecx";
 			}	
 			if(nowquad->src1->level==level)
 			{
-				fprintf(x86codes,"mov edx,ebp\nsub edx,%d\nimul %s,4\nsub edx,%s\n"
-						,-nowquad->src1->adr,num1.data(),num1.data());
+				/*fprintf(x86codes,"mov edx,ebp\nsub edx,%d\nimul %s,4\nsub edx,%s\n"
+						,-nowquad->src1->adr,num1.data(),num1.data());*/
+				fprintf(x86codes,"lea edx,[ebp+ecx*4%d]\n",nowquad->src1->adr);
 			}
 			else
 			{
-				fprintf(x86codes,"mov edx,[ebp+%d]\nsub edx,%d\nimul %s,4\nsub edx,%s\n",
-					8+nowquad->src1->level*4,-nowquad->src1->adr,num1.data(),num1.data());	
+			/*	fprintf(x86codes,"mov edx,[ebp+%d]\nsub edx,%d\nimul %s,4\nsub edx,%s\n",
+					8+nowquad->src1->level*4,-nowquad->src1->adr,num1.data(),num1.data());*/
+				fprintf(x86codes,"mov edx,[ebp+%d]\nlea edx,[edx+ecx*4%d]\n",8+nowquad->src1->level*4,nowquad->src1->adr);
 			}
 			handle_src1(nowquad->ans,num1);
 			fprintf(x86codes,"mov [edx],%s\n",num1.data());

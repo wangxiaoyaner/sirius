@@ -1,5 +1,6 @@
 #include"global.h"
 queue<string> my_write_string;
+//map<symbItem*,symbItem*> parser_arrvar_arr;
 int my_writes_num=1;
 static int parser_procedure();
 static int parser_compoundstatement();
@@ -94,6 +95,14 @@ static void parser_create_new_var()
 	name+=numtostring(tmpvarcode++);
 	if(!symbtable_enter(name,"var","integer",0,0))//assert
 		cout << "Error:parser_create_new_var_symbtable_enter"<< endl;
+}
+static void parser_create_new_var(symbItem *operand)
+{
+	string name="_";
+	name+=numtostring(tmpvarcode++);
+	if(!symbtable_enter(name,"arrvar",operand->type,0,0))
+		cout << "Error:parser_create_new_var_symbtable_enter"<<endl;
+//	parser_arrvar_arr[symbtable_now->last_item]=operand;
 }
 void parser_program()
 {
@@ -813,7 +822,7 @@ static int parser_factor()
 		}
 		if(operand->kind=="array")
 		{
-			parser_create_new_var();
+			parser_create_new_var(operand);
 			symbItem *ans=symbtable_now->last_item,*src2;
 			lex_getsym();
 			if(lex_sym!="[")

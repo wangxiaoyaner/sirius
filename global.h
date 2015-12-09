@@ -86,6 +86,7 @@ extern char lex_line[];
 void lex_getch();
 int lex_getsym();
 
+extern map<symbItem*,symbItem*>parser_arrvar_arr;
 extern map<string,string> global_anti_ralation;
 extern map<string,string> global_ralation;
 string numtostring(int num);
