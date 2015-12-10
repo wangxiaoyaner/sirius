@@ -1,6 +1,6 @@
 #include"global.h"
 queue<string> my_write_string;
-//map<symbItem*,symbItem*> parser_arrvar_arr;
+static int function_adr=0;
 int my_writes_num=1;
 static int parser_procedure();
 static int parser_compoundstatement();
@@ -223,6 +223,7 @@ static int parser_procedure()
 		func->link=NULL;
 		global_const_pool.push(func);
 	}
+	func->adr=function_adr++;
 	global_new_quadruple("func",func,NULL,NULL);
 	if(!parser_compoundstatement())
 		return 0;

@@ -321,8 +321,8 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 				}
 			}
 			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			fprintf(x86codes,"mov [ebp-8],ebx\nmov [ebp-12],edi\nmov [ebp-16],esi\ncall %s%d\nmov ebx,[ebp-8]\nmov edi,[ebp-12]\nmov esi,[ebp-16]\nadd esp,%d\n",
-					nowquad->src1->name.data(),nowquad->src1->level+1,(nowquad->src1->size+mynum)*4);
+			fprintf(x86codes,"mov [ebp-8],ebx\nmov [ebp-12],edi\nmov [ebp-16],esi\ncall %s0%d\nmov ebx,[ebp-8]\nmov edi,[ebp-12]\nmov esi,[ebp-16]\nadd esp,%d\n",
+					nowquad->src1->name.data(),nowquad->src1->adr,(nowquad->src1->size+mynum)*4);
 
 		}
 		else if(nowquad->opr=="ret")
@@ -345,8 +345,8 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 			}
 			else
 			{
-				fprintf(x86codes,"%s%d:\npush ebp\nmov ebp,esp\nsub esp,%d\n"
-						,nowquad->src1->name.data(),nowquad->src1->level+1,nowfunc->table->localsnum*4+16);
+				fprintf(x86codes,"%s0%d:\npush ebp\nmov ebp,esp\nsub esp,%d\n"
+						,nowquad->src1->name.data(),nowquad->src1->adr,nowfunc->table->localsnum*4+16);
 			}
 		}
 		else if(nowquad->opr=="jmp")
@@ -537,7 +537,7 @@ void generate_main()
 	fputs("global main\nextern printf\nextern scanf\nsection .data\nstrint:db'\%d',0\nstrchar: db' %c',0\nstroutchar: db '%c',0\n",x86codes);
 	for(int i=1;i<my_writes_num;i++)
 	{
-		fprintf(x86codes,"str%d: db \"%s\",10,0\n",i,my_write_string.front().data());
+		fprintf(x86codes,"str%d: db \"%s\",0\n",i,my_write_string.front().data());
 		my_write_string.pop();
 	}
 	fprintf(x86codes,"section .text\n");
