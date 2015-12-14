@@ -227,7 +227,7 @@ static int parser_procedure()
 	global_new_quadruple("func",func,NULL,NULL);
 	if(!parser_compoundstatement())
 		return 0;
-	global_new_quadruple("ret",NULL,NULL,NULL);
+	global_new_quadruple("ret",func,NULL,NULL);
 	symbtable_up_level();
 	return 1;
 }

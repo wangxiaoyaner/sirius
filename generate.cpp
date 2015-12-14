@@ -205,7 +205,7 @@ static void handle_src2(symbItem *src2,string &num2)
 		}
 		else if(src2->adr%4)
 		{//找到所在层的调用层的ebp，
-			fprintf(x86codes,"mov ecx,[ebp+%d]\nsub ecx,%d",8+src2->level*4,4+src2->adr*4);
+			fprintf(x86codes,"mov ecx,[ebp+%d]\nsub ecx,%d\n",8+src2->level*4,4+src2->adr*4);
 			num2="[ecx]";
 			if(src2->type=="char")
 			{
@@ -332,7 +332,10 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 			/*	symbItem *tmp=tmpregpool["eax"];//在eax里还留着的只会是本层的局部变量。
 				if(tmp!=NULL)
 					fprintf(x86codes,"mov [ebp-%d],eax\n",tmp->adr);*/
-				fprintf(x86codes,"mov eax,[ebp-4]\nmov esp,ebp\npop ebp\nret\n");
+				if(nowquad->src1->kind=="function"&&nowquad->src1->type=="char")
+					fprintf(x86codes,"movzx eax,byte [ebp-4]\nmov esp,ebp\npop ebp\nret\n");
+				else
+					fprintf(x86codes,"mov eax,[ebp-4]\nmov esp,ebp\npop ebp\nret\n");
 			}
 			else
 				fprintf(x86codes,"mov esp,ebp\nret\n");
@@ -420,6 +423,9 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		{
 			string num2;
 			handle_src2(nowquad->src1,num2);//取地址或者全局寄存器
+			if(num2[0]=='[')
+				fprintf(x86codes,"%s dword %s\n",nowquad->opr.data(),num2.data());
+			else
 			fprintf(x86codes,"%s %s\n",nowquad->opr.data(),num2.data());
 		}
 		else if(nowquad->opr=="rpara")//rpara增加一个参数(笑脸)取地址或者全局寄存器
@@ -432,10 +438,22 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 				else
 					fprintf(x86codes,"push dword [ebp%d]\n",nowquad->src1->adr);
 			}
-			else if(nowquad->src1->adr%4&&nowquad->src1->level==level)
+			else if(nowquad->src1->kind!="parameter"&&nowquad->src1->adr%4&&nowquad->src1->level==level)
 			{	
 				fprintf(x86codes,"lea eax,[ebp-%d]\npush eax\n",4+nowquad->src1->adr*4);
-			}else{
+			}else if(nowquad->src1->kind=="parameter"&&nowquad->src1->para_ifvar)
+			{
+				if(nowquad->src1->level==level)
+				{
+					fprintf(x86codes,"push dword [ebp+%d]\n",4+4*(level+nowquad->src1->adr));
+				}
+				else
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\npush dword [eax+%d]\n",(8+4*level),4+4*(level+nowquad->src1->adr));
+				}
+
+			}
+			else{
 				handle_src2(nowquad->src1,num2);
 				fprintf(x86codes,"push %s\n",num2.data());
 			}
