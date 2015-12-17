@@ -1,4 +1,5 @@
 #include"global.h"
+#define PARSER_DEBUG
 queue<string> my_write_string;
 static int function_adr=0;
 int my_writes_num=1;
@@ -229,6 +230,9 @@ static int parser_procedure()
 		return 0;
 	global_new_quadruple("ret",func,NULL,NULL);
 	symbtable_up_level();
+	#ifdef PARSER_DEBUG
+	cout << "prcedure" << endl;
+	#endif
 	return 1;
 }
 static int parser_compoundstatement()//require 读了begin 后面的一个单词
@@ -275,6 +279,9 @@ static int parser_compoundstatement()//require 读了begin 后面的一个单词
 		return 0;
 	}
 	lex_getsym();
+	#ifdef PARSER_DEBUG
+	cout << "复合语句" << endl;
+	#endif
 	return 1;
 }
 static int parser_constdefinition()//常量定义
@@ -336,6 +343,9 @@ static int parser_constdefinition()//常量定义
 		global_error("ident",lex_sym);//常量定义开头是标识符
 		return 0;
 	}
+	#ifdef PARSER_DEBUG
+	cout << "常量定义" << endl;
+	#endif
 	return 1;
 }
 
@@ -373,6 +383,9 @@ static int parser_constdeclaration()
 		return 0;
 	}
 	lex_getsym();
+	#ifdef PARSER_DEBUG
+	cout << "常量声明" << endl;
+	#endif
 	return 1;
 }
 
@@ -475,6 +488,9 @@ static int parser_vardefinition()
 		global_error("ident",lex_sym);//变量定义开头是标识符
 		return 0;
 	}
+	#ifdef PARSER_DEBUG
+	cout << "变量定义" << endl;
+	#endif
 	return 1;
 }
 static int parser_vardeclaration()
@@ -497,6 +513,9 @@ static int parser_vardeclaration()
 		else
 			lex_getsym();
 	}while(lex_sym=="ident");
+	#ifdef PARSER_DEBUG
+	cout << "变量声明" << endl;
+	#endif
 	return 1;
 }
 static int parser_functiondeclaration()
@@ -575,6 +594,9 @@ static int parser_functiondeclaration()
 	}
 	else
 	lex_getsym();
+	#ifdef PARSER_DEBUG
+	cout << "函数声明" << endl;
+	#endif
 	return 1;
 }
 static int parser_proceduredeclaration()
@@ -638,6 +660,9 @@ static int parser_proceduredeclaration()
 		return 0;
 	}
 	lex_getsym();
+	#ifdef PARSER_DEBUG 
+    cout << "过程声明" << endl;
+	#endif
 	return 1;
 }
 
@@ -670,6 +695,9 @@ static int parser_formalparalist(int &para_size)
 		}
 		lex_getsym();
 	}
+	#ifdef PARSER_DEBUG
+	cout << "形式参数表" << endl;
+	#endif
 	return 1;
 }
 
@@ -733,6 +761,9 @@ static int parser_formalparasection(int &para_size)
 			lex_getsym();
 		}
 	}
+	#ifdef PARSER_DEBUG
+	cout << "形式参数段" << endl;
+	#endif
 	return 1;
 }
 
@@ -767,6 +798,9 @@ static int parser_expression()
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
+	#ifdef PARSER_DEBUG
+	cout << "表达式" << endl;
+	#endif
 	return 1;
 }
 static int parser_term(int &if_low_zero)
@@ -807,6 +841,9 @@ static int parser_term(int &if_low_zero)
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
+	#ifdef PARSER_DEBUG
+	cout << "项" << endl;
+	#endif
 	return 1;
 }
 
@@ -926,6 +963,9 @@ static int parser_factor()
 		global_error("legal factor",lex_sym);
 		return 0;
 	}
+	#ifdef PARSER_DEBUG
+	cout << "因子" << endl;
+	#endif
 	return 1;
 }
 static int if_ralation_opr(string a)
@@ -1407,6 +1447,9 @@ static int parser_statement(symbItem *forbid)
 	{
 		//空语句怎么处理，那就不处理好了?
 	}
+	#ifdef PARSER_DEBUG
+	cout <<"语句"<< endl; 
+	#endif
 	return 1;
 }
 static int parser_condition(symbItem **src1,symbItem **src2,string &oprname)//传进lable1
@@ -1437,6 +1480,9 @@ static int parser_condition(symbItem **src1,symbItem **src2,string &oprname)//�
 		return 0;
 	*src2=operand_stack.top();
 	operand_stack.pop();
+	#ifdef PARSER_DEBUG
+	cout << "条件" << endl;
+	#endif
 	return 1;
 }
 //Require: item is func or proc
@@ -1480,6 +1526,13 @@ static int parser_realparameterlist(symbItem *func_proc)
 	symbItem *k=func_proc->link;
 	if(func_proc->name==symbtable_now->name)//调用自身此时符号表没调整。
 		k=symbtable_now->first_item;
+	else if(j&&(k==NULL||k->kind!="parameter"))//这里子表没有撤回的情况有很多
+	{
+		symbTable *tmp=symbtable_now;
+		while(tmp->name!=func_proc->name)
+			tmp=tmp->father;
+		k=tmp->first_item;
+	}
 	for(int i=1;i<=j;i++)
 	{
 		src=para_stack.top();
@@ -1492,6 +1545,8 @@ static int parser_realparameterlist(symbItem *func_proc)
 				src=parser_create_new_const(src);
 			global_new_quadruple("fpara",src,func_proc,NULL);
 		}
+			if(k==NULL)
+			cout << "are you kidding me!" <<endl;
 		k=k->link;//Require k<>NULL;
 	}
 	if(lex_sym!=")")
@@ -1500,6 +1555,9 @@ static int parser_realparameterlist(symbItem *func_proc)
 		return 0;
 	}
 	lex_getsym();
+	#ifdef PARSER_DEBUG
+	cout << "实在参数表" << endl;
+	#endif
 	return 1;
 }
 
