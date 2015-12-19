@@ -320,9 +320,14 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 					mynum++;
 				}
 			}
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			#ifdef WIN_FORM
 			fprintf(x86codes,"mov [ebp-8],ebx\nmov [ebp-12],edi\nmov [ebp-16],esi\ncall _%s0%d\nmov ebx,[ebp-8]\nmov edi,[ebp-12]\nmov esi,[ebp-16]\nadd esp,%d\n",
 					nowquad->src1->name.data(),nowquad->src1->adr,(nowquad->src1->size+mynum)*4);
+			#else
+			fprintf(x86codes,"mov [ebp-8],ebx\nmov [ebp-12],edi\nmov [ebp-16],esi\ncall %s0%d\nmov ebx,[ebp-8]\nmov edi,[ebp-12]\nmov esi,[ebp-16]\nadd esp,%d\n",
+					nowquad->src1->name.data(),nowquad->src1->adr,(nowquad->src1->size+mynum)*4);
+
+			#endif
 
 		}
 		else if(nowquad->opr=="ret")
@@ -344,12 +349,21 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		{
 			if(nowquad->src1->name=="main")
 			{
+				#ifdef WIN_FORM
 				fprintf(x86codes,"_main:\nmov ebp,esp\nsub esp,%d\n",nowfunc->table->localsnum*4+16);
+				#else
+				fprintf(x86codes,"main:\nmov ebp,esp\nsub esp,%d\n",nowfunc->table->localsnum*4+16);
+				#endif
 			}
 			else
 			{
+				#ifdef WIN_FORM
 				fprintf(x86codes,"_%s0%d:\npush ebp\nmov ebp,esp\nsub esp,%d\n"
 						,nowquad->src1->name.data(),nowquad->src1->adr,nowfunc->table->localsnum*4+16);
+				#else
+				fprintf(x86codes,"%s0%d:\npush ebp\nmov ebp,esp\nsub esp,%d\n"
+						,nowquad->src1->name.data(),nowquad->src1->adr,nowfunc->table->localsnum*4+16);
+				#endif
 			}
 		}
 		else if(nowquad->opr=="jmp")
@@ -519,7 +533,11 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		}
 		else if(nowquad->opr=="writes")
 		{
+			#ifdef WIN_FORM
 			fprintf(x86codes,"push str%d\ncall _printf\nadd esp,4\n",nowquad->src1->value);
+			#else
+			fprintf(x86codes,"push str%d\ncall printf\nadd esp,4\n",nowquad->src1->value);
+			#endif
 		}
 		else if(nowquad->opr=="writee")//tmp var的类型们不一定是int
 		{
@@ -527,20 +545,40 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 			handle_src1(nowquad->src1,num1);		
 			if(nowquad->src1->type=="integer")
 			{
+				#ifdef WIN_FORM
 				fprintf(x86codes,"push %s\npush strint\ncall _printf\nadd esp,8\n",num1.data());
+				#else
+				fprintf(x86codes,"push %s\npush strint\ncall printf\nadd esp,8\n",num1.data());
+				#endif
 			}
 			else
 			{
+				#ifdef WIN_FORM
 				fprintf(x86codes,"push %s\npush stroutchar\ncall _printf\nadd esp,8\n",num1.data());
+				#else
+				fprintf(x86codes,"push %s\npush stroutchar\ncall printf\nadd esp,8\n",num1.data());
+				#endif
+				
 			}
 		}
 		else if(nowquad->opr=="read")
 		{
 			if(nowquad->src1->type=="integer")
+			{
+				#ifdef WIN_FORM
 				fprintf(x86codes,"sub esp,4\npush esp\n push strint\ncall _scanf\nadd esp,8\nmov eax,[esp]\n");
+				#else
+				fprintf(x86codes,"sub esp,4\npush esp\n push strint\ncall scanf\nadd esp,8\nmov eax,[esp]\n");
+				#endif
+
+			}
 			else
+				#ifdef WIN_FORM
 				fprintf(x86codes,"sub esp,4\npush esp\n push strchar\ncall _scanf\nadd esp,8\nmovzx eax,byte[esp]\n");
-				handle_ans(nowquad->src1,"eax");
+				#else
+				fprintf(x86codes,"sub esp,4\npush esp\n push strchar\ncall scanf\nadd esp,8\nmovzx eax,byte[esp]\n");
+				#endif	
+			handle_ans(nowquad->src1,"eax");
 				fprintf(x86codes,"add esp,4\n");
 		}
 		else
@@ -552,7 +590,12 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 }
 void generate_main()
 {
+	#ifdef WIN_FORM
 	fputs("global _main\nextern _printf\nextern _scanf\nsection .data\nstrint:db'\%d',0\nstrchar: db' %c',0\nstroutchar: db '%c',0\n",x86codes);
+	#else
+	fputs("global main\nextern printf\nextern scanf\nsection .data\nstrint:db'\%d',0\nstrchar: db' %c',0\nstroutchar: db '%c',0\n",x86codes);
+	#endif
+
 	for(int i=1;i<my_writes_num;i++)
 	{
 		fprintf(x86codes,"str%d: db \"%s\",0\n",i,my_write_string.front().data());

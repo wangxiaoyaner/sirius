@@ -904,9 +904,7 @@ static int parser_factor()
 				global_error("no parameter",lex_sym);
 				return 0;
 			}
-			if(!operand->size)
-				lex_getsym();
-			else
+			else if(operand->size)
 			{
 				if(!parser_realparameterlist(operand))
 					return 0;
@@ -1526,7 +1524,7 @@ static int parser_realparameterlist(symbItem *func_proc)
 	symbItem *k=func_proc->link;
 	if(func_proc->name==symbtable_now->name)//调用自身此时符号表没调整。
 		k=symbtable_now->first_item;
-	else if(j&&(k==NULL||k->kind!="parameter"))//这里子表没有撤回的情况有很多
+	else if(j&&(k==NULL||k->kind!="parameter"))//这里子表没有撤回的情况有很多,不过一旦动用了这条分支，意味着死循环
 	{
 		symbTable *tmp=symbtable_now;
 		while(tmp->name!=func_proc->name)
