@@ -1,3 +1,4 @@
+#define MAIN_DEBUG
 #include"global.h"
 int main()
 {
@@ -11,16 +12,18 @@ int main()
 	else{
 		global_init();
 		symbtable_new_level("main");
-		cout << "befor parser"<<endl;
 		parser_program();
-		cout << "end parser" << endl;
 		if(!global_error_num)
 		{
 			optimazation_adr_alloc();
+			#ifdef MAIN_DEBUG
 			symbtable_display();
 			global_quadruple_display();
+			#else
+				printf("Program compiles successfully!\n");
+			#endif
 			generate_main();
-			return 0;
 		}
 	}
+	return 0;
 }

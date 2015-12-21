@@ -467,17 +467,31 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 				}
 
 			}
+			else if(nowquad->src1->kind=="parameter")
+			{
+				if(nowquad->src1->level==level)
+					fprintf(x86codes,"lea eax,[ebp+%d]\npush eax\n",4+4*(level+nowquad->src1->adr));
+				else
+				{
+					fprintf(x86codes,"mov eax,[ebp+%d]\nlea eax,[eax+%d]\npush eax\n",(8+4*level),4+4*(level+nowquad->src1->adr));
+				}
+			}
 			else{
 				handle_src2(nowquad->src1,num2);
-				fprintf(x86codes,"push %s\n",num2.data());
+				if(num2[0]!='[')
+					fprintf(x86codes,"push %s\n",num2.data());
+				else
+					fprintf(x86codes,"push dword %s\n",num2.data());
 			}
 		}
 		else if(nowquad->opr=="fpara")
 		{
 			string num1;
 			handle_src1(nowquad->src1,num1);
-
+			if(num1[0]!='[')
 			fprintf(x86codes,"push %s\n",num1.data());
+			else
+				fprintf(x86codes,"push dword %s\n",num1.data());
 		}
 		else if(nowquad->opr=="larray")//larray src1 src2 ans : ans=src1[src2]
 		{//地址肯定小于0
@@ -543,6 +557,8 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 		{
 			string num1;
 			handle_src1(nowquad->src1,num1);		
+			if(num1[0]=='_')
+				num1="dword "+num1;
 			if(nowquad->src1->type=="integer")
 			{
 				#ifdef WIN_FORM

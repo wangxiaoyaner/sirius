@@ -1,5 +1,5 @@
 #include"global.h"
-#define PARSER_DEBUG
+//#define PARSER_DEBUG
 queue<string> my_write_string;
 static int function_adr=0;
 int my_writes_num=1;
@@ -90,11 +90,11 @@ static symbItem* parser_create_new_const(symbItem *src)
 	global_const_pool.push(ans);
 	return ans;
 }
-static void parser_create_new_var()
+static void parser_create_new_var(string type)
 {
 	string name="_";
 	name+=numtostring(tmpvarcode++);
-	if(!symbtable_enter(name,"var","integer",0,0))//assert
+	if(!symbtable_enter(name,"var",type,0,0))//assert
 		cout << "Error:parser_create_new_var_symbtable_enter"<< endl;
 }
 static void parser_create_new_var(symbItem *operand)
@@ -793,7 +793,10 @@ static int parser_expression()
 		operand_stack.pop();
 		if(src1&&src1->kind=="const")
 			src1=parser_create_new_const(src1);
-		parser_create_new_var();
+		if(src1->type=="char"&&src2->type=="char")
+			parser_create_new_var("char");
+		else
+			parser_create_new_var("integer");
 		ans=symbtable_now->last_item;
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
@@ -811,12 +814,12 @@ static int parser_term(int &if_low_zero)
 		return 0;
 	if(if_low_zero)
 	{
-		parser_create_new_var();
-		ans=symbtable_now->last_item;
 		src1=operand_stack.top();
 		operand_stack.pop();
 		if(src1&&src1->kind=="const")
 			src1=parser_create_new_const(src1);
+		parser_create_new_var(src1->type);
+		ans=symbtable_now->last_item;
 		global_new_quadruple("assign",src1,NULL,ans);
 		global_new_quadruple("neg",ans,NULL,NULL);
 		operand_stack.push(ans);
@@ -828,8 +831,6 @@ static int parser_term(int &if_low_zero)
 		lex_getsym();
 		if(!parser_factor())
 			return 0;
-		parser_create_new_var();
-		ans=symbtable_now->last_item;
 		src2=operand_stack.top();
 		operand_stack.pop();
 		if(src2&&src2->kind=="const")
@@ -838,6 +839,11 @@ static int parser_term(int &if_low_zero)
 		operand_stack.pop();
 		if(src1&&src1->kind=="const")
 			src1=parser_create_new_const(src1);
+		if(src1->type=="char"&&src2->type=="char")
+			parser_create_new_var("char");
+		else
+			parser_create_new_var("integer");
+		ans=symbtable_now->last_item;
 		global_new_quadruple(opr,src1,src2,ans);
 		operand_stack.push(ans);
 	}
@@ -890,13 +896,17 @@ static int parser_factor()
 				global_error("]",lex_sym);
 				return 0;
 			}
-			global_new_quadruple("larray",operand,src2,ans);
+			if(ans->type=="char"&&operand->type=="integer")
+			{
+				global_error("integer can not be asssigned to a char");
+			}
+			global_new_quadruple("larray",operand,src2,ans);//ans=operand[src2]
 			operand_stack.push(ans);
 			lex_getsym();
 		}
 		else if(operand->kind=="function")
 		{
-			parser_create_new_var();
+			parser_create_new_var(operand->type);
 			symbItem *ans=symbtable_now->last_item;
 			lex_getsym();
 			if(lex_sym=="("&&!operand->size)
@@ -950,7 +960,7 @@ static int parser_factor()
 		item->name=numtostring(lex_value);
 		item->value=lex_value;
 		item->kind="constpool";
-		item->type="digit";//digit,char,string,lable
+		item->type="integer";//digit,char,string,lable
 		item->link=NULL;
 		operand_stack.push(item);
 		global_const_pool.push(item);//放到常量池里面
@@ -1022,7 +1032,12 @@ static int parser_statement(symbItem *forbid)
 			operand_stack.pop();
 			if(expre->kind=="const")
 				expre=parser_create_new_const(expre);
-			global_new_quadruple("assign",expre,NULL,tmp);
+			if(tmp->type=="char"&&expre->type=="integer")
+			{
+				global_error("integer can not be asssigned to a char");
+			//	mark_i=0;
+			}
+				global_new_quadruple("assign",expre,NULL,tmp);
 		}
 		else if(tmp->kind=="array")
 		{//tmp [src1]
@@ -1074,6 +1089,10 @@ static int parser_statement(symbItem *forbid)
             operand_stack.pop();
 			if(ans->kind=="const")
 				ans=parser_create_new_const(ans);
+			if(tmp->type=="char"&&ans->type=="integer")
+			{
+				global_error("integer can not be asssigned to a char");
+			}
             global_new_quadruple("sarray",tmp,src2,ans);//tmp[src2]=ans
 		}
 		else if(tmp->kind=="function")//函数标示符=表达式
@@ -1098,6 +1117,8 @@ static int parser_statement(symbItem *forbid)
 			operand_stack.pop();
 			if(src1&&src1->kind=="const")
 				src1=parser_create_new_const(src1);
+			if(src1->type=="integer"&&tmp->type=="char")
+				global_error("integer can not be assigined to a char ");
 			global_new_quadruple("assign",src1,NULL,tmp);
         }
         else if(tmp->kind=="procedure")//过程调用语句,tmp已经经过差表
@@ -1531,12 +1552,39 @@ static int parser_realparameterlist(symbItem *func_proc)
 			tmp=tmp->father;
 		k=tmp->first_item;
 	}
+	int mark_i=0;
+	stack<string> paras;
+	symbItem *twx=k;
 	for(int i=1;i<=j;i++)
+	{
+		paras.push(twx->type);
+		twx=twx->link;
+	}
+	for(int i=1;i<=j;i++)//k是顺着来的而栈里的参数是反着来的。。
 	{
 		src=para_stack.top();
 		para_stack.pop();
-		if(k->para_ifvar&&src->kind!="const")//可能撤表了也可能没撤表
-			global_new_quadruple("rpara",src,func_proc,NULL);
+		if(paras.top()=="char"&&src->type=="integer")
+		{
+			global_error("parameter type error:char","integer:"+src->name);	
+			mark_i=1;
+		}
+		paras.pop();
+		if(k->para_ifvar&&src->kind!="const")//可能撤表了也可能没撤
+		{
+			if(src->kind=="var"&&src->name[0]=='_')
+			{
+				global_error("legal var parameter","expression");
+				mark_i=1;
+			}		
+			else
+				global_new_quadruple("rpara",src,func_proc,NULL);
+		}
+		else if(k->para_ifvar&&src->kind=="const")
+		{
+			global_error("legal var parameter","const");
+			mark_i=1;
+		}
 		else
 		{
 			if(src->kind=="const")
@@ -1556,6 +1604,8 @@ static int parser_realparameterlist(symbItem *func_proc)
 	#ifdef PARSER_DEBUG
 	cout << "实在参数表" << endl;
 	#endif
+/*	if(mark_i)
+		return 0;*/
 	return 1;
 }
 
