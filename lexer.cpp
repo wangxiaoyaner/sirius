@@ -207,7 +207,13 @@ int lex_getsym()//lex_getch first
 			if(lex_ch=='"')
 				lex_getch();
 			else
-				global_error("\"",""+lex_ch);
+			{
+				string ttt="";
+				if(isspace(lex_ch))
+					ttt="space";
+				else ttt+=lex_ch;
+				global_error("\"",ttt);
+			}
 			return 1;
 		}
 		else if(lex_ch=='{')

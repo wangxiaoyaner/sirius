@@ -1,4 +1,4 @@
-#define MAIN_DEBUG
+//#define MAIN_DEBUG
 #include"global.h"
 int main()
 {

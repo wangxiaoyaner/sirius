@@ -262,6 +262,7 @@ static int parser_compoundstatement()//require 读了begin 后面的一个单词
 				global_error("end","nothing");
 				return 0;
 			}
+			global_error(";","nothing");
 		}
 		if(!parser_statement(NULL))
 		{
@@ -432,12 +433,14 @@ static int parser_vardefinition()
 				if(lex_sym!="[")
 				{
 					global_error("[",lex_sym);
+					if_array=0;
 					return 0;
 				}
 				else
 					lex_getsym();
 				if(lex_sym!="digit")
 				{
+					if_array=0;
 					global_error("digit",lex_sym);
 					return 0;
 				}
@@ -445,6 +448,7 @@ static int parser_vardefinition()
 				lex_getsym();
 				if(lex_sym!="]")
 				{
+					if_array=0;
 					global_error("]",lex_sym);
 					return 0;
 				}
@@ -461,6 +465,7 @@ static int parser_vardefinition()
 				else
 				{
 					global_error("integer or char",lex_sym);
+					if_array=0;
 					return 0;
 				}
 			}
@@ -1553,21 +1558,25 @@ static int parser_realparameterlist(symbItem *func_proc)
 		k=tmp->first_item;
 	}
 	int mark_i=0;
-	stack<string> paras;
+	stack<symbItem*> paras;
 	symbItem *twx=k;
 	for(int i=1;i<=j;i++)
 	{
-		paras.push(twx->type);
+		paras.push(twx);
 		twx=twx->link;
 	}
 	for(int i=1;i<=j;i++)//k是顺着来的而栈里的参数是反着来的。。
 	{
 		src=para_stack.top();
 		para_stack.pop();
-		if(paras.top()=="char"&&src->type=="integer")
+		if(paras.top()->type=="char"&&src->type=="integer")
 		{
-			global_error("parameter type error:char","integer:"+src->name);	
+			global_error("parameter type error:char","integer:");	
 			mark_i=1;
+		}
+		if(paras.top()->para_ifvar&&paras.top()->type=="integer"&&src->type=="char")
+		{
+			global_error("real parameter type error,integer","char");
 		}
 		paras.pop();
 		if(k->para_ifvar&&src->kind!="const")//可能撤表了也可能没撤

@@ -1,4 +1,5 @@
 #include"global.h"
+//#define WIN_FORM
 static int level;
 static int hasmetpara_pushglobalreg;
 static map<string,symbItem*> tmpregpool;//eax,ecx,edx;
@@ -559,7 +560,7 @@ display 区的构造总述如下:假定是从第 i 层模块进入到第 j 层�
 			handle_src1(nowquad->src1,num1);		
 			if(num1[0]=='_')
 				num1="dword "+num1;
-			if(nowquad->src1->type=="integer")
+			if(nowquad->src1->type=="integer"||nowquad->src1->type=="char"&&nowquad->src1->name[0]=='_')//我特么觉着好逗。。
 			{
 				#ifdef WIN_FORM
 				fprintf(x86codes,"push %s\npush strint\ncall _printf\nadd esp,8\n",num1.data());
